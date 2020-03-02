@@ -3,11 +3,6 @@
 library(tidyverse)
 
 final <- read_rds("./Egne datasett/final_dataset.rds")
-str(final)
-
-summary(final$spei3)
-
-final %>% filter(lon == 19.25, lat == (-34.75), year == 2000) %>% select(spei3, gwno, year)
 
 # Remove best and events --------------------------------------------------
 
@@ -43,4 +38,4 @@ table(sample_final_prop$conflict)/nrow(sample_final_prop)
 sample_final_prop <- select(sample_final_prop, -num_rows)
 
 #' Usikker på hvilken metode som er best. Blir jo en massiv overrepresentasjon av de med conflict = 1 i datasettet.
-str(final)
+
