@@ -2,6 +2,8 @@
 
 library(tidyverse)
 
+#f
+
 final <- read_rds("./Egne datasett/final_dataset.rds")
 
 # Remove best and events --------------------------------------------------
