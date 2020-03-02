@@ -2,20 +2,19 @@
 ##### Random forest #####
 
 library(tidyverse)
-library(grf) # Generalized random forest-pakke
-library(randomForest) # Gammel randomforest-pakke
-library(caret) # For datasplitting-funksjoner
+library(grf)
+library(randomForest) 
+library(caret)
 
 # Load the data for alternative 1
 sample_final <- read_rds("./Egne datasett/sample_of_finaldata_for_rf.rds")
 
-# Stratified random sampling based on outcome variable -------------------------------------------------------------
 
+# Stratified random sampling based on outcome variable -------------------------------------------------------------
 # The alternative 1 and alternative 2 follows the alternative 1 and 2 from the sub-sampling process. Until decided which to choose. 
 
 ### Alternative 1
 # stratifiserer basert på de to levelsene av conflict, slik at får en even distribution
-
 set.seed(125)
 
 trainrows <- createDataPartition(sample_final$conflict, p = 0.7, list = F) # Fra caret-pakka
@@ -26,8 +25,8 @@ test <- sample_final[-trainrows,]
 table(training$conflict) / nrow(training)
 table(test$conflict) / nrow(test)
 
-### Alternative 2
 
+### Alternative 2
 set.seed(125)
 
 trainrows <- createDataPartition(sample_final_prop$conflict, p = 0.7, list = F) # Fra caret-pakka
@@ -44,13 +43,11 @@ table(test_prop$conflict) / nrow(test_prop)
 
 ### Alternative 1
 mod <- randomForest(conflict ~ ., data = training, proximity = T, importance = T, na.action = na.exclude)
-mod
-
 
 varImpPlot(mod)
 varImp(mod)
 
-# Prøver å plotte et tre
+# Plotter et tre, brukt som eksempel
 plot(mod)
 library(rpart.plot) # Eksempel som tas med i metodedelen
 
@@ -59,7 +56,6 @@ rpart.plot(mod_rpart)
 
 # grf --------------------------------------------------------------------
 
-# Får error, ulik lengde på x og datasett
 X = model.matrix(~., data = training[, !(names(training) %in% c("conflict", "spei3"))])
 
 
@@ -73,3 +69,4 @@ cf <- causal_forest(
 
 
 # Det skjer noe galt i x-leddet. Alle rader forsvinner. Hvorfor det? 
+
