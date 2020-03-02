@@ -18,6 +18,7 @@ pop <- read_rds("./Egne datasett/population.rds")
 cru <- read_rds("./Egne datasett/cru.rds")
 prio_ucdp <- read_rds("./Egne datasett/prio_ucdp_merged.rds")
 
+table(complete.cases(cru))
 
 # Fix cru-variables ---------------------------------
 names(prio_ucdp)
@@ -121,15 +122,16 @@ new_data <- prio_ucdp %>%
 
 
 # conflict skal egentlig være faktor med two levels (ikke numerisk, da kan de bli feil senere ved rf)
-final <- new_data  %>% select(gid, year, gwno, lon = xcoord, lat = ycoord, conflict, events, best, spei3, spei3_pos, spei3_neg, temp, agri_ih, bdist3, 
+final <- new_data  %>% dplyr::select(gid, year, gwno, lon = xcoord, lat = ycoord, conflict, events, best, spei3, spei3_pos, spei3_neg, temp, agri_ih, bdist3, 
                                    capdist, ttime_mean, pop, empl_agr, unempl_tot, excluded, shdi, libdem, global_ind, gdp) %>% 
   mutate(conflict = as.factor(conflict))
+
+
 
 
 saveRDS(final, "./Egne datasett/final_dataset.rds")
 
 table(is.na(final$spei3)) # 45 % missing
-
 
 
 
