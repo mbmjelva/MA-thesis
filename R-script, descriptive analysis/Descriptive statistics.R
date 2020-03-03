@@ -62,6 +62,7 @@ prop.table(table(final$conflict))
   theme_minimal() +
     theme(text = element_text(size = 20)) +
   labs(x = "SPEI3", y =""))
+spei
 
 ggsave("./figurer/spei_distibution.png")
 
@@ -78,27 +79,4 @@ ggarrange(spei, temp, align = "v")
 ggsave("./Figurer/speiogtemp.png")
 
 
-hist(final$bdist3, col = "lightblue", density = 15)
-hist(final$spei3, col = "lightblue", density = 15)
-hist(final$temp, col = "lightblue", density = 15)
-hist(final$shdi, col = "lightblue", density = 15)
-hist(final$pop, col = "lightblue", density = 15, xlim = c(0,2000), breaks = 500)
-hist(final$best, col = "lightblue", density = 15, xlim = c(0,2000), breaks = 500)
-hist(final$excluded, col = "lightblue", density = 15)
-
-
-sapply(final, hist)
-
-# Det nedenfor funker ikke nå
-## Correlation heat map
-library(reshape2)
-library(ggplot2)
-
-# Create correlation matrix
-cordata <- round(cor(final),2)
-head(cordata) #This will be a 5X5 matrix with each correlation values
-
-#Melt data to bring the correlation values in two axis
-melted_cordata <- melt(cordata)
-head(melted_cordata)
 
