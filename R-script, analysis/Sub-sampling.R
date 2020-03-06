@@ -23,4 +23,5 @@ s
 table(s$conflict)/nrow(s)
 
 
+
 saveRDS(s, "./Egne datasett/resamled_data_25_vs_75.rds")
