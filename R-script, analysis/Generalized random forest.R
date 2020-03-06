@@ -37,8 +37,8 @@ cf_neg <- causal_forest(
   seed = 2865
 )
 
-cf_neg
-
+# Save the model
+save(cf_neg, file = "./R-script, analysis/Models/cf_neg.rds")
 
 # Fra grf-github ----------------------------------------------------------
 
@@ -62,7 +62,6 @@ average_treatment_effect(cf_neg, target.sample = "treated")
 
 
 # Fra Mark ----------------------------------------------------------------
-# Thank you Mark
 
 # Variable importance
 cf_neg %>% 
@@ -88,17 +87,17 @@ p1 <- ggplot(test_speineg, aes(x = unempl_tot, y = preds)) +
   theme_light()
 p1
 
-p2 <- ggplot(test_speineg, aes(x = canvass_minutes, y = preds)) +
+p2 <- ggplot(test_speineg, aes(x = bdist3, y = preds)) +
   geom_point() +
   geom_smooth(method = "loess", span = 1) +
   theme_light()
 
-p3 <- ggplot(test_speineg, aes(x = trans_therm_pre, y = preds)) +
+p3 <- ggplot(test_speineg, aes(x = global_ind, y = preds)) +
   geom_point() +
   geom_smooth(method = "loess", span = 1) +
   theme_light()
 
-p4 <- ggplot(test_speineg, aes(x = sdo, y = preds)) +
+p4 <- ggplot(test_speineg, aes(x = shdi, y = preds)) +
   geom_point() +
   geom_smooth(method = "loess", span = 1) +
   theme_light()
