@@ -7,6 +7,9 @@ library(rpart.plot)
 
 sample_final <- readRDS("./Egne datasett/resampled_data_enmill.rds")
 
+# Change to factor for later analysis
+sample_final$conflict <- as.factor(sample_final$conflict)
+
 # Remove the other conflict-variables. Here for robustness test (??)
 sample_final <- select(sample_final, -best, -events)
 
@@ -29,10 +32,19 @@ train_speineg <- select(train_nona, -spei3, -spei3_pos)
 test_speipos <- select(test_nona, -spei3, -spei3_neg)
 test_speineg <- select(test_nona, -spei3, -spei3_pos)
 
+train_speifull <- select(train_nona, -spei3_pos, -spei3_neg)
+test_speifull <- select(test_nona, -spei3_pos, -spei3_neg)
+
+
+
+# Run models --------------------------------------------------------------
+
+
+# Model with negative SPEI
 cf_neg <- causal_forest(
   X = model.matrix(~., data = train_speineg[, !(names(train_speineg) %in% c("conflict", "spei3_neg"))]), # exclude the outcome and treatment variables
   Y = as.numeric(train_speineg$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
-  W = train_nona$spei3[!is.na(train_speineg$spei3_neg)], # Must be without NA
+  W = train_speineg$spei3_neg[!is.na(train_speineg$spei3_neg)], # Must be without NA
   num.trees = 1000,
   seed = 2865
 )
@@ -40,66 +52,77 @@ cf_neg <- causal_forest(
 # Save the model
 save(cf_neg, file = "./R-script, analysis/Models/cf_neg.rds")
 
-# Fra grf-github ----------------------------------------------------------
-
-tau.hat.oob <- predict(cf_neg)
-hist(tau.hat.oob$predictions)
-
-# Estimate treatment effects for the test sample.
-
-
-tau.hat <- predict(cf_neg, test_speineg)
-plot(X.test[, 1], tau.hat$predictions, ylim = range(tau.hat$predictions, 0, 2), xlab = "x", ylab = "tau", type = "l")
-lines(X.test[, 1], pmax(0, X.test[, 1]), col = 2, lty = 2)
-
-# Estimate the conditional average treatment effect on the full sample (CATE).
-average_treatment_effect(cf_neg, target.sample = "all")
-
-# Estimate the conditional average treatment effect on the treated sample (CATT).
-# Here, we don't expect much difference between the CATE and the CATT, since
-# treatment assignment was randomized.
-average_treatment_effect(cf_neg, target.sample = "treated")
-
-
-# Fra Mark ----------------------------------------------------------------
-
 # Variable importance
-cf_neg %>% 
+varimp_neg <- cf_neg %>% 
   variable_importance() %>% 
   as.data.frame() %>% 
   mutate(variable = colnames(cf_neg$X.orig)) %>% 
   arrange(desc(V1))
 
-preds <- predict(
-  object = cf_neg, 
-  newdata = model.matrix(~ ., data = test_speineg[, !(names(train_speineg) %in% c("conflict", "spei3_neg"))]), 
-  estimate.variance = TRUE
+
+# Model with positive SPEI
+cf_pos <- causal_forest(
+  X = model.matrix(~., data = train_speipos[, !(names(train_speipos) %in% c("conflict", "spei3_pos"))]), # exclude the outcome and treatment variables
+  Y = as.numeric(train_speipos$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
+  W = train_speipos$spei3_pos[!is.na(train_speipos$spei3_pos)], # Must be without NA
+  num.trees = 1000,
+  seed = 2865
 )
 
-# Mark gjorde noe annet her. Det funket ikke. Hvorfor? test_speineg$preds <- preds$predictions[, 1]
-test_speineg$preds <- preds$predictions
-test_speineg
+save(cf_pos, file = "./R-script, analysis/Models/cf_pos.rds")
+
+# Variable importance
+varimp_pos <- cf_pos %>% 
+  variable_importance() %>% 
+  as.data.frame() %>% 
+  mutate(variable = colnames(cf_neg$X.orig)) %>% 
+  arrange(desc(V1))
 
 
-p1 <- ggplot(test_speineg, aes(x = unempl_tot, y = preds)) +
-  geom_point() +
-  geom_smooth(method = "loess", span = 1) +
-  theme_light()
-p1
+# Model with full-scale SPEI
+cf_full <- causal_forest(
+  X = model.matrix(~., data = train_speipos[, !(names(train_speifull) %in% c("conflict", "spei3"))]), # exclude the outcome and treatment variables
+  Y = as.numeric(train_speifull$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
+  W = train_speifull$spei3[!is.na(train_speifull$spei3)], # Must be without NA
+  num.trees = 1000,
+  seed = 2865
+)
 
-p2 <- ggplot(test_speineg, aes(x = bdist3, y = preds)) +
-  geom_point() +
-  geom_smooth(method = "loess", span = 1) +
-  theme_light()
+save(cf_full, file = "./R-script, analysis/Models/cf_full.rds")
 
-p3 <- ggplot(test_speineg, aes(x = global_ind, y = preds)) +
-  geom_point() +
-  geom_smooth(method = "loess", span = 1) +
-  theme_light()
+varimp_full <- cf_full %>% 
+  variable_importance() %>% 
+  as.data.frame() %>% 
+  mutate(variable = colnames(cf_neg$X.orig)) %>% 
+  arrange(desc(V1))
 
-p4 <- ggplot(test_speineg, aes(x = shdi, y = preds)) +
-  geom_point() +
-  geom_smooth(method = "loess", span = 1) +
-  theme_light()
 
-cowplot::plot_grid(p1, p2, p3, p4)
+
+
+# Plots of variable importance --------------------------------------------
+# Fargevalg for analysen: #CE916D/#C78A4C, #98A982, #615E5D
+
+(pos <- ggplot(varimp_pos) + 
+  geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = "#98A982") + # Reorder order the chategories depending on the values of a second variable (V1)
+  theme_minimal() +
+  labs(x = "", y = "Variable Importance", title = "SPEI3 positive") +
+  coord_flip())
+
+(neg <- ggplot(varimp_neg) + 
+  geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = "#C78A4C") + # Reorder order the chategories depending on the values of a second variable (V1)
+  theme_minimal() +
+  labs(x = "", y = "Variable Importance", title = "SPEI3 negative") +
+  #scale_x_discrete() +
+  coord_flip())
+
+(full <- ggplot(varimp_full) + 
+  geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = "#615E5D") + # Reorder order the chategories depending on the values of a second variable (V1)
+  theme_minimal() +
+  labs(x = "", y = "Variable Importance", title = "SPEI3") +
+  #scale_x_discrete() +
+  coord_flip())
+
+
+ggpubr::ggarrange(pos, neg, full)
+
+ggsave("./Figurer/variance_importance_threegraphs.jpg")
