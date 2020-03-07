@@ -1,6 +1,5 @@
 
 ## Constructing dataset - R ##
-#rm(list=ls())
 
 library(tidyverse)
 library(countrycode)
@@ -18,10 +17,9 @@ pop <- read_rds("./Egne datasett/population.rds")
 cru <- read_rds("./Egne datasett/cru.rds")
 prio_ucdp <- read_rds("./Egne datasett/prio_ucdp_merged.rds")
 
-table(complete.cases(cru))
 
 # Fix cru-variables ---------------------------------
-names(prio_ucdp)
+
 # Remove infinite numbers
 cru$spei3 <- if_else(is.infinite(cru$spei3), 0, cru$spei3)
 
@@ -33,8 +31,8 @@ cru <- filter(cru, (lon %in% lons & lat %in% lats))
 
 # Divide SPEI3 into two variables based on positive and negative values
 
-cru <- cru %>% mutate(spei3_pos = ifelse(spei3 > 0, spei3, NA),
-                      spei3_neg = ifelse(spei3 < 0, spei3, NA))
+cru <- cru %>% mutate(spei3_pos = ifelse(spei3 > 0, spei3, 0),
+                      spei3_neg = ifelse(spei3 < 0, spei3, 0))
 
 # Changing country to gwno for all variables to be matched by country ------------------------------
 
@@ -122,16 +120,13 @@ new_data <- prio_ucdp %>%
 
 
 # conflict skal egentlig være faktor med two levels (ikke numerisk, da kan de bli feil senere ved rf)
-final <- new_data  %>% dplyr::select(gid, year, gwno, lon = xcoord, lat = ycoord, conflict, events, best, spei3, spei3_pos, spei3_neg, temp, agri_ih, bdist3, 
-                                   capdist, ttime_mean, pop, empl_agr, unempl_tot, excluded, shdi, libdem, global_ind, gdp) %>% 
+final <- new_data  %>% dplyr::select(gid, year, gwno, lon = xcoord, lat = ycoord, conflict, events, best, spei3, spei3_pos, spei3_neg, temp, 
+                                     agri_ih, irrig_sum, bdist3, capdist, ttime_mean, pop, empl_agr, unempl_tot, excluded, shdi, 
+                                     libdem, global_ind, gdp) %>% 
   mutate(conflict = as.factor(conflict))
 
 
-
-
 saveRDS(final, "./Egne datasett/final_dataset.rds")
-
-table(is.na(final$spei3)) # 45 % missing
 
 
 
