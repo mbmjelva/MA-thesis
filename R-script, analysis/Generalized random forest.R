@@ -5,7 +5,7 @@ library(grf)
 library(caret)
 library(rpart.plot) 
 
-sample_final <- readRDS("./Egne datasett/resampled_data_enmill.rds")
+sample_final <- readRDS("./Egne datasett/resampled_data.rds")
 
 # Change to factor for later analysis
 sample_final$conflict <- as.factor(sample_final$conflict)
@@ -102,18 +102,32 @@ varimp_full <- cf_full %>%
 # Plots of variable importance --------------------------------------------
 # Fargevalg for analysen: #CE916D/#C78A4C, #98A982, #615E5D
 
+load(file = "./R-script, analysis/Models/cf_neg.rds")
+load(file = "./R-script, analysis/Models/cf_pos.rds")
+load(file = "./R-script, analysis/Models/cf_full.rds")
+
+area_color <- c("#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D",
+                "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#CE916D", "#615E5D",
+                "#615E5D", "#615E5D", "#615E5D", "#98A982", "#615E5D", "#615E5D")
+
+(neg <- ggplot(varimp_neg) + 
+   geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = area_color) + # Reorder order the chategories depending on the values of a second variable (V1)
+   theme_minimal() +
+   scale_y_continuous(limits = c(0, 0.3)) +
+   labs(x = "", y = "Variable Importance", title = "SPEI3 negative") +
+   coord_flip())
+
+area_color_pos <- c("#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D",
+                "#615E5D", "#615E5D", "#615E5D", "#98A982", "#615E5D", "#615E5D", "#615E5D",
+                "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#CE916D")
+
 (pos <- ggplot(varimp_pos) + 
-  geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = "#98A982") + # Reorder order the chategories depending on the values of a second variable (V1)
+  geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = area_color_pos) + # Reorder order the chategories depending on the values of a second variable (V1)
   theme_minimal() +
+  scale_y_continuous(limits = c(0, 0.3)) +
   labs(x = "", y = "Variable Importance", title = "SPEI3 positive") +
   coord_flip())
 
-(neg <- ggplot(varimp_neg) + 
-  geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = "#C78A4C") + # Reorder order the chategories depending on the values of a second variable (V1)
-  theme_minimal() +
-  labs(x = "", y = "Variable Importance", title = "SPEI3 negative") +
-  #scale_x_discrete() +
-  coord_flip())
 
 (full <- ggplot(varimp_full) + 
   geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = "#615E5D") + # Reorder order the chategories depending on the values of a second variable (V1)
@@ -123,6 +137,6 @@ varimp_full <- cf_full %>%
   coord_flip())
 
 
-ggpubr::ggarrange(pos, neg, full)
+ggpubr::ggarrange(neg, pos)
 
 ggsave("./Figurer/variance_importance_threegraphs.jpg")
