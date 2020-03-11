@@ -1,11 +1,16 @@
-## Tester Jonas-metode for å plotte verdier ###
+## Tester Jonas-metode for å plotte APE ###
+
+library(tidyverse)
+
+load(file = "./R-script, analysis/Models/cf_neg.rds")
+
+train_speineg <- readRDS(file = "./R-script, analysis/Models/train_speineg.rds")
+test_speineg <- readRDS(file = "./R-script, analysis/Models/test_speineg.rds")
 
 # Tester med numerisk variabel
 test_speineg$conflict <- as.numeric(as.character(test_speineg$conflict))
 train_speineg$conflict <- as.numeric(as.character(train_speineg$conflict))
-str(test_speineg)
-str(train_speineg)
-table(train_speineg$conflict)
+
 
 apes_neg <- tibble()
 
@@ -63,7 +68,7 @@ ggplot(apes_neg, aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color 
 
 
 save(apes_neg, file = "./R-script, analysis/Models/apes_neg.rds")
-
+load(file = "./R-script, analysis/Models/apes_neg.rds")
 
 ggplot(apes_neg, aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) +
   
