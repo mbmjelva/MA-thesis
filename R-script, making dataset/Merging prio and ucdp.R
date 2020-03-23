@@ -3,7 +3,6 @@
 #### Merging priogrid and ucdp ####
 
 library(tidyverse)
-library(countrycode)
 
 ucdp_ged <- read_rds("./Egne datasett/ucdp_ged.rds")
 priogrid <- read_rds("./Egne datasett/priogrid.rds")

@@ -4,7 +4,8 @@
 library(tidyverse)
 library(countrycode)
 library(questionr)
-# setwd("/Users/mathildemjelva/Library/Mobile Documents/com~apple~CloudDocs/Mastergrad/Masteroppgave/R-master/")
+library(tidymodels)
+library(stargazer)
 
 # Loading datasets --------------------------------------------------------
 
@@ -23,7 +24,7 @@ prio_ucdp <- read_rds("./Egne datasett/prio_ucdp_merged.rds")
 # Remove infinite numbers
 cru$spei3 <- if_else(is.infinite(cru$spei3), 0, cru$spei3)
 
-# Remove all gridcells that cover ocean(water?)
+# Remove all gridcells that cover ocean
 lons <- unique(prio_ucdp$xcoord)
 lats <- unique(prio_ucdp$ycoord)
 
@@ -33,6 +34,19 @@ cru <- filter(cru, (lon %in% lons & lat %in% lats))
 
 cru <- cru %>% mutate(spei3_pos = ifelse(spei3 > 0, spei3, 0),
                       spei3_neg = ifelse(spei3 < 0, spei3, 0))
+
+# Check if there is a time trend in SPEI
+mod <- lm(spei3_neg ~ year, cru)
+mod2 <- lm(spei3_pos ~ year, cru)
+
+stargazer(mod, mod2, 
+          covariate.labels = c("Year", "Constant"),
+          dep.var.labels = c("SPEI3 negative", "SPEI3 positive"))
+
+# Year has a significant effect on the spei values. Subtract the effect from the spei values to detrend SPEI.
+cru$spei3_neg <- cru$spei3_neg - mod$coefficients["year"]
+cru$spei3_pos <- cru$spei3_pos - mod2$coefficients["year"]
+
 
 # Changing country to gwno for all variables to be matched by country ------------------------------
 
@@ -119,10 +133,21 @@ new_data <- prio_ucdp %>%
   left_join(kof, by = c("gwno", "year"))
 
 
+
+# Log-transformation of relevant variables --------------------------------
 # conflict skal egentlig være faktor med two levels (ikke numerisk, da kan de bli feil senere ved rf)
-final <- new_data  %>% dplyr::select(gid, year, gwno, lon = xcoord, lat = ycoord, conflict, events, best, spei3, spei3_pos, spei3_neg, temp, 
-                                     agri_ih, irrig_sum, bdist3, capdist, ttime_mean, pop, empl_agr, unempl_tot, excluded, shdi, 
-                                     libdem, global_ind, gdp) %>% 
+
+log_vars <- c("gdp", "bdist3", "capdist", "ttime_mean")
+
+final <- new_data %>%
+  dplyr::select(gid, year, gwno, lon = xcoord, lat = ycoord, conflict, events, best, spei3, spei3_pos, spei3_neg, temp, 
+                agri_ih, irrig_sum, bdist3, capdist, ttime_mean, pop, empl_agr, unempl_tot, excluded, shdi, 
+                libdem, global_ind, gdp) %>%
+  recipe(.) %>%
+  update_role(!!log_vars, new_role = "log_transform") %>%
+  step_log(has_role("log_transform"), offset = 1) %>%
+  prep() %>%
+  juice() %>%
   mutate(conflict = as.factor(conflict))
 
 
