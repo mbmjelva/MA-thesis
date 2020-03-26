@@ -210,25 +210,40 @@ ggplot(test_speineg, aes(x = preds, color = factor(conflict), fill = factor(conf
   #scale_y_continuous(limits = c(0,25)) +
   theme_bw()
 
+# Sjekker hvor godt prediksjonene stemmer med faktiske verdier på y. probs viser estimated change in probability of Y associated with treatment W. 
 ggplot(test_speineg, aes(factor(conflict), preds)) +
   geom_boxplot(fill = "#B77659") +
   theme_bw()
+# Denne grafen sier egentlig ingenting. Viser hvilken effect på konflikt de som har 0 på konflikt trolig har og hvilken effekt på konflikt de som har 1 har. Hva sir det oss egentlig? 
+
+ggplot(test_speineg, aes(spei3_neg, preds)) +
+  geom_point(colour = "#3C1518", alpha = 0.5) +
+  theme_bw() +
+  labs(y = "Estimated treatment effect", x = "SPEI3 negative")
+
+ggsave("./Figurer/speineg_vs_preds.png")
+
+# Denne kanskje mer interessant? Viser at samme spei-verdi kan ha både positive og negative effekter på y
 
 (p1 <- ggplot(test_speineg, aes(x = libdem, y = preds)) +
   geom_point() +
-  geom_smooth(method = "loess", span = 1) +
   theme_light())
 
 p2 <- ggplot(test_speineg, aes(x = temp, y = preds)) +
   geom_point() +
-  geom_smooth(method = "loess", span = 1) +
   theme_light()
 
 p3 <- ggplot(test_speineg, aes(x = unempl_tot, y = preds)) +
   geom_point() +
-  geom_smooth(method = "loess", span = 1) +
+  theme_light()
+p2
+p3
+
+ggplot(test_speineg, aes(x = excluded, y = preds)) +
+  geom_point() +
   theme_light()
 
+table(test_speineg$excluded)
 
 plot_htes <- function(cf_preds, ci = FALSE, z = 1.96) {
   if (is.null(cf_preds$predictions) || nrow(cf_preds$predictions) == 0)
