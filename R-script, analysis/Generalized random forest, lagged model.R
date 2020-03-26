@@ -1,11 +1,15 @@
-### GRF ###
+# Generalized random forest - lagged model #
+
+# Nb, koden er ikke endret fra scriptet til generalized random forest, bortsett fra å bruke et annet datasett og endre navn på lagrede produkt. 
+# Altså vil dette scriptet overkjøre det andre hvis man kjører samtidig.
 
 library(tidyverse)
 library(grf)
 library(caret)
-library(rpart.plot) 
+library(rpart.plot)
+library(ggpubr)
 
-sample_final <- readRDS("./Egne datasett/resampled_data.rds")
+sample_final <- readRDS("./Egne datasett/resampled_data_lagged.rds")
 
 # Change to factor for later analysis
 sample_final$conflict <- as.factor(sample_final$conflict)
@@ -35,36 +39,37 @@ test_speineg <- select(test_nona, -spei3, -spei3_pos)
 train_speifull <- select(train_nona, -spei3_pos, -spei3_neg)
 test_speifull <- select(test_nona, -spei3_pos, -spei3_neg)
 
-saveRDS(train_speipos, "./R-script, analysis/Models/train_speipos.rds")
-saveRDS(train_speineg, "./R-script, analysis/Models/train_speineg.rds")
+saveRDS(train_speipos, "./R-script, analysis/Models/train_speipos_lagged.rds")
+saveRDS(train_speineg, "./R-script, analysis/Models/train_speineg_lagged.rds")
 
-saveRDS(test_speipos, "./R-script, analysis/Models/test_speipos.rds")
-saveRDS(test_speineg, "./R-script, analysis/Models/test_speineg.rds")
+saveRDS(test_speipos, "./R-script, analysis/Models/test_speipos_lagged.rds")
+saveRDS(test_speineg, "./R-script, analysis/Models/test_speineg_lagged.rds")
 
-saveRDS(train_speifull, "./R-script, analysis/Models/train_speifull.rds")
-saveRDS(test_speifull, "./R-script, analysis/Models/test_speifull.rds")
+saveRDS(train_speifull, "./R-script, analysis/Models/train_speifull_lagged.rds")
+saveRDS(test_speifull, "./R-script, analysis/Models/test_speifull_lagged.rds")
 
 # Run models --------------------------------------------------------------
 
+# Bør egentlig ha tune_parameter = "all" når kjører modellen, eller estimere mer enn 1000 trær.
 
 # Model with negative SPEI
 cf_neg <- causal_forest(
   X = model.matrix(~., data = train_speineg[, !(names(train_speineg) %in% c("conflict", "spei3_neg"))]), # exclude the outcome and treatment variables
   Y = as.numeric(train_speineg$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
   W = train_speineg$spei3_neg[!is.na(train_speineg$spei3_neg)], # Must be without NA
-  num.trees = 1000,
+  tune.parameters = "all",
   seed = 2865
 )
 
 # Save the model
-save(cf_neg, file = "./R-script, analysis/Models/cf_neg.rds")
+save(cf_neg, file = "./R-script, analysis/Models/cf_neg_lagged.rds")
 
 # Variable importance
 varimp_neg <- cf_neg %>% 
   variable_importance() %>% 
   as.data.frame() %>% 
   mutate(variable = colnames(cf_neg$X.orig)) %>% 
-  arrange(desc(V1))
+  arrange(desc(V1)) # Endrer seg noe fra variable importance uten lagged. Unemployment er plutselig mye høyere opp
 
 
 # Model with positive SPEI
@@ -72,11 +77,11 @@ cf_pos <- causal_forest(
   X = model.matrix(~., data = train_speipos[, !(names(train_speipos) %in% c("conflict", "spei3_pos"))]), # exclude the outcome and treatment variables
   Y = as.numeric(train_speipos$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
   W = train_speipos$spei3_pos[!is.na(train_speipos$spei3_pos)], # Must be without NA
-  num.trees = 1000,
+  tune.parameters = "all",
   seed = 2865
 )
 
-save(cf_pos, file = "./R-script, analysis/Models/cf_pos.rds")
+save(cf_pos, file = "./R-script, analysis/Models/cf_pos_lagged.rds")
 
 # Variable importance
 varimp_pos <- cf_pos %>% 
@@ -91,11 +96,11 @@ cf_full <- causal_forest(
   X = model.matrix(~., data = train_speipos[, !(names(train_speifull) %in% c("conflict", "spei3"))]), # exclude the outcome and treatment variables
   Y = as.numeric(train_speifull$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
   W = train_speifull$spei3[!is.na(train_speifull$spei3)], # Must be without NA
-  num.trees = 1000,
+  tune.parameters = "all",
   seed = 2865
 )
 
-save(cf_full, file = "./R-script, analysis/Models/cf_full.rds")
+save(cf_full, file = "./R-script, analysis/Models/cf_full_lagged.rds")
 
 varimp_full <- cf_full %>% 
   variable_importance() %>% 
@@ -103,57 +108,30 @@ varimp_full <- cf_full %>%
   mutate(variable = colnames(cf_neg$X.orig)) %>% 
   arrange(desc(V1))
 
+## Plotter
+# SPEI_neg
+# Remove variables that are not explanatory so that not included in the plot
+varimp_neg_wo <- subset(varimp_neg, !variable %in% c("gid", "lon", "lat", "lag_1_lon", "lag_1_lat"))
 
+(spei_neg <- ggplot(varimp_neg_wo) + 
+    geom_bar(aes(reorder(variable, V1), V1), stat = "identity") + # Reorder order the chategories depending on the values of a second variable (V1)
+    theme_minimal() +
+    scale_y_continuous(limits = c(0, 0.2)) +
+    labs(x = "", y = "Variable Importance", title = "SPEI3 negative") +
+    coord_flip())
 
+# SPEI_pos
+# Remove variables that are not explanatory so that not included in the plot
+varimp_pos_wo <- subset(varimp_pos, !variable %in% c("gid", "lon", "lat", "lag_1_lon", "lag_1_lat"))
 
-# Plots of variable importance --------------------------------------------
-# Fargevalg for analysen: #CE916D/#C78A4C, #98A982, #615E5D
-
-load(file = "./R-script, analysis/Models/cf_neg.rds")
-load(file = "./R-script, analysis/Models/cf_pos.rds")
-load(file = "./R-script, analysis/Models/cf_full.rds")
-
-area_color <- c("#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D",
-                "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#CE916D", "#615E5D",
-                "#615E5D", "#615E5D", "#615E5D", "#98A982", "#615E5D", "#615E5D")
-
-(neg <- ggplot(varimp_neg) + 
-   geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = area_color) + # Reorder order the chategories depending on the values of a second variable (V1)
-   theme_minimal() +
-   scale_y_continuous(limits = c(0, 0.3)) +
-   labs(x = "", y = "Variable Importance", title = "SPEI3 negative") +
-   coord_flip())
-
-area_color_pos <- c("#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D",
-                "#615E5D", "#615E5D", "#615E5D", "#98A982", "#615E5D", "#615E5D", "#615E5D",
-                "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#615E5D", "#CE916D")
-
-(pos <- ggplot(varimp_pos) + 
+(spei_pos <- ggplot(varimp_pos_wo) + 
   geom_bar(aes(reorder(variable, V1), V1), stat = "identity") + # Reorder order the chategories depending on the values of a second variable (V1)
   theme_minimal() +
-  scale_y_continuous(limits = c(0, 0.3)) +
+  scale_y_continuous(limits = c(0, 0.2)) +
   labs(x = "", y = "Variable Importance", title = "SPEI3 positive") +
   coord_flip())
 
 
-(full <- ggplot(varimp_full) + 
-  geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = "#615E5D") + # Reorder order the chategories depending on the values of a second variable (V1)
-  theme_minimal() +
-  labs(x = "", y = "Variable Importance", title = "SPEI3") +
-  #scale_x_discrete() +
-  coord_flip())
+ggpubr::ggarrange(spei_neg, spei_pos)
 
-ggpubr::ggarrange(neg, pos)
-
-ggsave("./Figurer/variance_importance_threegraphs.jpg")
-
-
-
-# Note: Variable importance er kumulativ, dvs, hvis du summerer alle tallene så blir det en. Viser hvor mye av de variablene vi har som er viktige, relativt til de andre variablene i analysen. Er altså avhengig av hvilke variabler som er med.
-
-# Sjekk ut denne siden for litt mer info om var.imp: https://towardsdatascience.com/explaining-feature-importance-by-example-of-a-random-forest-d9166011959e
-# Negative importance? 
-# Og denne: https://socviz.co/modeling.html?
-
-
-
+ggsave("./Figurer/variable_importence_lagged.png")
