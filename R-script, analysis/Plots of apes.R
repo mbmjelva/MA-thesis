@@ -5,12 +5,36 @@ library(tidyverse)
 # Spei neg
 load(file = "./R-script, analysis/Models/apes_neg_25interval.rds")
 
+# Alle variablene i analysen (også de som er lagged)
+apes_neg %>% 
+  filter(variable == c("temp", "libdem", "capdist", "bdist3", "global_ind",
+                                 "pop", "unempl_tot", "ttime_mean", "gdp","shdi", "empl_agr", "irrig_sum", "agri_ih",
+                                 "excluded")) %>%
+  ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) +
+  geom_point() + 
+  geom_errorbar() + 
+  facet_wrap(variable~., scales = "free") + 
+  theme_light() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    strip.text.y = element_text(colour = "black"),
+    strip.background = element_rect(colour = NA, fill = NA),
+    legend.position = "bottom"
+  ) +
+  coord_flip() +
+  scale_color_manual(values = c("#3C1518", "#008279")) +
+  geom_hline(yintercept = 0, linetype = 3)
+
+ggsave("./Figurer/apes with lagged variables.png")
+
+# Under: individuelle plots, men også sammensatt, da uten mange av variablene
 shdi <- apes_neg %>% filter(variable == "shdi") %>% 
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
   theme_light() +
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
   labs(x = "SHDI", y = "") +
   coord_flip() +
   theme(
@@ -19,7 +43,8 @@ shdi <- apes_neg %>% filter(variable == "shdi") %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "none",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
   scale_color_manual(values = c("#008279", "#3C1518")) +
   geom_hline(yintercept = 0, linetype = 3)
@@ -29,7 +54,7 @@ unempl_tot <- apes_neg %>% filter(variable == "unempl_tot") %>%
   geom_point() + 
   geom_errorbar() + 
   theme_light() +
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
   labs(x = "Unemployment", y = "") +
   coord_flip() +
   theme(
@@ -38,7 +63,8 @@ unempl_tot <- apes_neg %>% filter(variable == "unempl_tot") %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "none",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
   scale_color_manual(values = c("#008279", "#3C1518")) +
   geom_hline(yintercept = 0, linetype = 3)
@@ -47,8 +73,8 @@ libdem <- apes_neg %>% filter(variable == c("libdem")) %>%
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
-  labs(x = "Liberal democracy", y = "") +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
+  labs(x = "Liberal\ndemocracy", y = "") +
   theme_light() +
   coord_flip()+
   theme(
@@ -57,6 +83,8 @@ libdem <- apes_neg %>% filter(variable == c("libdem")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "none",
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
   scale_color_manual(values = c("#2D2A32", "#008279")) +
   geom_hline(yintercept = 0, linetype = 3)
@@ -65,7 +93,7 @@ temp <- apes_neg %>% filter(variable == c("temp")) %>%
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
   labs(x = "Temperature", y = "") +
   theme_light() +
   coord_flip() +
@@ -75,7 +103,8 @@ temp <- apes_neg %>% filter(variable == c("temp")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "bottom",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
   scale_color_manual(values = c("#3C1518", "#008279")) +
   geom_hline(yintercept = 0, linetype = 3)
@@ -84,7 +113,7 @@ pop <- apes_neg %>% filter(variable == c("pop")) %>%
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
   labs(x = "Population", y = "") +
   theme_light() +
   coord_flip() +
@@ -94,7 +123,8 @@ pop <- apes_neg %>% filter(variable == c("pop")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "bottom",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
   scale_color_manual(values = c("#3C1518", "#008279")) +
   geom_hline(yintercept = 0, linetype = 3)
@@ -103,8 +133,8 @@ empl_agr <- apes_neg %>% filter(variable == c("empl_agr")) %>%
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
-  labs(x = "Employment agriculture", y = "") +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
+  labs(x = "Employment\nagriculture", y = "") +
   theme_light() +
   coord_flip() +
   theme(
@@ -113,7 +143,8 @@ empl_agr <- apes_neg %>% filter(variable == c("empl_agr")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "bottom",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
   scale_color_manual(values = c("#008279")) +
   geom_hline(yintercept = 0, linetype = 3)
@@ -122,8 +153,8 @@ capdist <- apes_neg %>% filter(variable == c("capdist")) %>%
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
-  labs(x = "Distance to capital", y = "") +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
+  labs(x = "Distance\nto capital", y = "") +
   theme_light() +
   coord_flip() +
   theme(
@@ -132,17 +163,18 @@ capdist <- apes_neg %>% filter(variable == c("capdist")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "bottom",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
-  scale_color_manual(values = c("#3C1518", "#008279")) +
+  scale_color_manual(values = c("#008279")) +
   geom_hline(yintercept = 0, linetype = 3)
 
-bdist <- apes_neg %>% filter(variable == c("bdist3")) %>% 
+(bdist <- apes_neg %>% filter(variable == c("bdist3")) %>% 
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
-  labs(x = "Distance to border", y = "") +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
+  labs(x = "Distance\nto border", y = "") +
   theme_light() +
   coord_flip() +
   theme(
@@ -151,16 +183,17 @@ bdist <- apes_neg %>% filter(variable == c("bdist3")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "bottom",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
   scale_color_manual(values = c("#3C1518", "#008279")) +
-  geom_hline(yintercept = 0, linetype = 3)
+  geom_hline(yintercept = 0, linetype = 3))
 
 global_ind <- apes_neg %>% filter(variable == c("global_ind")) %>% 
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
   labs(x = "Globalization", y = "") +
   theme_light() +
   coord_flip() +
@@ -170,7 +203,8 @@ global_ind <- apes_neg %>% filter(variable == c("global_ind")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "bottom",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
   scale_color_manual(values = c("#3C1518", "#008279")) +
   geom_hline(yintercept = 0, linetype = 3)
@@ -179,7 +213,7 @@ gdp <- apes_neg %>% filter(variable == c("gdp")) %>%
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
   labs(x = "GDP", y = "") +
   theme_light() +
   coord_flip() +
@@ -189,16 +223,17 @@ gdp <- apes_neg %>% filter(variable == c("gdp")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "bottom",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
-  scale_color_manual(values = c("#3C1518", "#008279")) +
+  scale_color_manual(values = c("#008279")) +
   geom_hline(yintercept = 0, linetype = 3)
 
 irrig_sum <- apes_neg %>% filter(variable == c("irrig_sum")) %>% 
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
   labs(x = "Irrigation", y = "") +
   theme_light() +
   coord_flip() +
@@ -208,17 +243,18 @@ irrig_sum <- apes_neg %>% filter(variable == c("irrig_sum")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "bottom",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
-  scale_color_manual(values = c("#3C1518", "#008279")) +
+  scale_color_manual(values = c("#008279")) +
   geom_hline(yintercept = 0, linetype = 3)
 
 agri_ih <- apes_neg %>% filter(variable == c("agri_ih")) %>% 
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
-  labs(x = "Agriculture in cell", y = "") +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
+  labs(x = "Agriculture\nin cell", y = "") +
   theme_light() +
   coord_flip() +
   theme(
@@ -227,7 +263,8 @@ agri_ih <- apes_neg %>% filter(variable == c("agri_ih")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "bottom",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
   scale_color_manual(values = c("#3C1518", "#008279")) +
   geom_hline(yintercept = 0, linetype = 3)
@@ -236,8 +273,8 @@ excluded <- apes_neg %>% filter(variable == c("excluded")) %>%
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
-  labs(x = "excluded", y = "") +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
+  labs(x = "Excluded", y = "") +
   theme_light() +
   coord_flip() +
   theme(
@@ -246,17 +283,18 @@ excluded <- apes_neg %>% filter(variable == c("excluded")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "bottom",
-    #axis.text.x = element_blank()
+    #axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
-  scale_color_manual(values = c("#3C1518", "#008279")) +
+  scale_color_manual(values = c("#008279")) +
   geom_hline(yintercept = 0, linetype = 3)
 
 ttime_mean <- apes_neg %>% filter(variable == c("ttime_mean")) %>% 
   ggplot(aes(x = quantile, y = ape, ymin = apemin, ymax = apemax, color = significant)) + 
   geom_point() + 
   geom_errorbar() + 
-  scale_y_continuous(limits = c(-0.05, 0.35)) +
-  labs(x = "Travel time urban center", y = "") +
+  scale_y_continuous(limits = c(-0.1, 0.6)) +
+  labs(x = "Travel time\nurban center", y = "") +
   theme_light() +
   coord_flip() +
   theme(
@@ -265,15 +303,29 @@ ttime_mean <- apes_neg %>% filter(variable == c("ttime_mean")) %>%
     strip.text.y = element_text(colour = "black"),
     strip.background = element_rect(colour = NA, fill = NA),
     legend.position = "bottom",
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    text = element_text(size = 15)
   ) +
   scale_color_manual(values = c("#3C1518", "#008279")) +
   geom_hline(yintercept = 0, linetype = 3)
 
+# Alle variablene
 ggpubr::ggarrange(temp, libdem, capdist, bdist, global_ind,
                   pop, unempl_tot, ttime_mean, gdp, shdi, empl_agr, irrig_sum, agri_ih,
                   excluded, ncol = 1, nrow = 14, align = "v",
                   common.legend = TRUE, legend = "bottom") # Må ha temperatur først fordi den har både sig og ikke sig resultater, slik at legend blir riktig.
 
-ggsave("./Figurer/apesneg all variables.png", height = 20, width = 7)
+ggsave("./Figurer/apesneg all variables.png", height = 20, width = 8)
 
+# Den øvre halvdelen av variablene (de syv most important)
+ggpubr::ggarrange(temp, libdem, capdist, bdist, global_ind,
+                  pop, unempl_tot, ncol = 1, nrow = 7, align = "v",
+                  common.legend = TRUE, legend = "bottom")
+ggsave("./Figurer/apesneg seven most important vars.png", height = 20, width = 8)
+
+
+# Nedre halvdel av variablene (de syv minst viktige)
+ggpubr::ggarrange(ttime_mean, gdp, shdi, empl_agr, irrig_sum, agri_ih,
+                  excluded, ncol = 1, nrow = 7, align = "v",
+                  common.legend = TRUE, legend = "bottom")
+ggsave("./Figurer/apesneg seven least important vars.png", height = 20, width = 8)
