@@ -315,7 +315,7 @@ ggpubr::ggarrange(temp, libdem, capdist, bdist, global_ind,
                   excluded, ncol = 1, nrow = 14, align = "v",
                   common.legend = TRUE, legend = "bottom") # Må ha temperatur først fordi den har både sig og ikke sig resultater, slik at legend blir riktig.
 
-ggsave("./Figurer/apesneg all variables.png", height = 20, width = 8)
+ggsave("./Figurer/apesneg all variables.png", height = 20, width = 9)
 
 # Den øvre halvdelen av variablene (de syv most important)
 ggpubr::ggarrange(temp, libdem, capdist, bdist, global_ind,
