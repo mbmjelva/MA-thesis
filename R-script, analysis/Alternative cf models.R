@@ -3,7 +3,6 @@
 
 # SPEI3 neg, inverse ------------------------------------------------------
 # sjekker om samme resultat
-
 train_speineg$spei3_neg <- train_speineg$spei3_neg*(-1)
 
 cf_neg_inverse <- causal_forest(
@@ -49,6 +48,7 @@ library(caret)
 library(rpart.plot)
 library(ggpubr)
 
+# må lage datasettene på nytt for å bevare lagged spei
 sample_final <- readRDS("./Egne datasett/resampled_data_lagged.rds")
 
 # Change to factor for later analysis
@@ -96,3 +96,43 @@ cf_neg_lag <- causal_forest(
 save(cf_neg_lag, file = "./R-script, analysis/Models/cf_neg_lagged_w_speilag.rds")
 
 # Variable importance
+varimp_neg_lag <- cf_neg_lag %>% 
+  variable_importance() %>% 
+  as.data.frame() %>% 
+  mutate(variable = colnames(cf_neg_lag$X.orig)) %>% 
+  arrange(desc(V1))
+
+ggplot(varimp_neg_lag) + 
+  geom_bar(aes(reorder(variable, V1), V1), stat = "identity") + # Reorder order the chategories depending on the values of a second variable (V1)
+  theme_minimal() +
+  #scale_y_continuous(limits = c(0, 0.2)) +
+  labs(x = "", y = "Variable Importance", title = "SPEI3 negative") +
+  coord_flip()
+
+
+# Model with positive SPEI
+cf_pos_lag <- causal_forest(
+  X = model.matrix(~., data = train_speipos[, !(names(train_speipos) %in% c("conflict", "lag_1_spei3_pos"))]), # exclude the outcome and treatment variables
+  Y = as.numeric(train_speipos$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
+  W = train_speipos$lag_1_spei3_pos[!is.na(train_speipos$lag_1_spei3_pos)], # Must be without NA
+  tune.parameters = "all", # Model tuens all tunable variables 
+  seed = 2865
+)
+
+# Save the model
+save(cf_pos_lag, file = "./R-script, analysis/Models/cf_pos_lagged_w_speilag.rds")
+
+# Variable importance
+varimp_pos_lag <- cf_pos_lag %>% 
+  variable_importance() %>% 
+  as.data.frame() %>% 
+  mutate(variable = colnames(cf_pos_lag$X.orig)) %>% 
+  arrange(desc(V1))
+
+ggplot(varimp_pos_lag) + 
+  geom_bar(aes(reorder(variable, V1), V1), stat = "identity") + # Reorder order the chategories depending on the values of a second variable (V1)
+  theme_minimal() +
+  #scale_y_continuous(limits = c(0, 0.2)) +
+  labs(x = "", y = "Variable Importance", title = "SPEI3 negative") +
+  coord_flip()
+
