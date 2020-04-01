@@ -20,12 +20,6 @@ prio_ucdp <- read_rds("./Egne datasett/prio_ucdp_merged.rds")
 
 # Fix cru-variables ---------------------------------
 
-table(vdem$country)
-table(kof$country)
-table(vdem$gwno)
-length(table(wb$country))
-length(table(wb$gwno))
-
 # Remove infinite numbers
 cru$spei3 <- if_else(is.infinite(cru$spei3), 0, cru$spei3)
 
@@ -66,10 +60,12 @@ cru$spei3_pos <- cru$spei3_pos - mod2$coefficients["year"]
 
 vdem <- dplyr::mutate(vdem, gwno = countrycode(country, "country.name", "gwn"))
 
+# Manually change values. Somaliland has to be set to NA as not independent (if left as it is, it is given the same code as Somalia, thus wrongly dobling the amount of observations for that country code)
 vdem$gwno <- ifelse(vdem$country == "Seychelles", 591,
                              ifelse(vdem$country == "Vanuatu", 935,
                                     ifelse(vdem$country == "Sao Tome and Principe", 403,
-                                           ifelse(vdem$country == "Yemen", 678, vdem$gwno))))
+                                           ifelse(vdem$country == "Yemen", 678,
+                                                  ifelse(vdem$country == "Somaliland", NA, vdem$gwno)))))
 
 
 ##' WB
@@ -101,6 +97,7 @@ wb$gwno <- ifelse(wb$country == "Dominica", 54,
 
 kof <- kof %>% mutate(gwno = countrycode(country, "country.name", "gwn"))
 
+# Manually give values to some of the gwno. North Korea was given the wrong gwno value in the countrycode transformation
 kof$gwno <- ifelse(kof$country == "Andorra", 231, 
                    ifelse(kof$country == "Dominica", 54,
                           ifelse(kof$country == "Kiribati", 970,
@@ -115,7 +112,8 @@ kof$gwno <- ifelse(kof$country == "Andorra", 231,
                                                                                          ifelse(kof$country == "Seychelles", 591,
                                                                                                 ifelse(kof$country == "Tonga", 972, 
                                                                                                        ifelse(kof$country == "Vanuatu", 935,
-                                                                                                              ifelse(kof$country == "Yemen, Rep.", 678, kof$gwno)))))))))))))))
+                                                                                                              ifelse(kof$country == "Yemen, Rep.", 678,
+                                                                                                                     ifelse(kof$country == "Korea, Dem. Rep.", 731, kof$gwno))))))))))))))))
 
 
 # Merging datasets --------------------------------------------------------
@@ -148,12 +146,20 @@ new_data <- left_join(new_data, wb, by = c("gwno", "year"))
 new_data <- left_join(new_data, vdem, by = c("gwno", "year")) # Her skjer det noe
 new_data <- left_join(new_data, kof, by = c("gwno", "year")) # Her skjer det absolutt noe. Frem til hit har antall observasjoner forholdt seg likt.
 
-names(vdem)
-names(new_data)
+# Må sjekke year, om det er noe galt der. GWNO skal nå være i orden. 
 
-table(vdem$gwno)
-table(kof$gwno)
-table(new_data$gwno)
+wb %>% select(year, gwno) %>% filter(gwno == 520) %>% group_by(gwno, year) %>% summarise(n = n())
+kof %>% select(year, gwno) %>% filter(gwno == 520) %>% group_by(gwno, year) %>% summarise(n = n()) # Her er det to land per år med den landekoden
+kof %>% filter(gwno == 520) %>% group_by(country) %>% summarise(n = n()) # Nord-Korea og Sør-Korea har fått samme landekode her. Nord-Korea har fått feil kode.
+wb %>% filter(gwno == 520) %>% group_by(country) %>% summarise(n = n()) 
+vdem %>% filter(gwno == 520) %>% group_by(country) %>% summarise(n = n()) # Somalia og Somaliland are given the same country code. Somaliland has to be set to NA as it is not independent.
+
+
+vdem %>% select(year, gwno, country) %>% filter(gwno == 520) %>% group_by(gwno, year, country) %>% summarise(n = n())
+wb %>% select(year, gwno, country) %>% filter(gwno == 520) %>% group_by(gwno, year, country) %>% summarise(n = n())
+
+prio_ucdp %>% select(year, gwno) %>% filter(gwno == 520) %>% group_by(gwno, year) %>% summarise(n = n())
+
 
 # Log-transformation of relevant variables --------------------------------
 # conflict skal egentlig være faktor med two levels (ikke numerisk, da kan de bli feil senere ved rf)
