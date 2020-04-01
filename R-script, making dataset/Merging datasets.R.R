@@ -18,8 +18,13 @@ pop <- read_rds("./Egne datasett/population.rds")
 cru <- read_rds("./Egne datasett/cru.rds")
 prio_ucdp <- read_rds("./Egne datasett/prio_ucdp_merged.rds")
 
-
 # Fix cru-variables ---------------------------------
+
+table(vdem$country)
+table(kof$country)
+table(vdem$gwno)
+length(table(wb$country))
+length(table(wb$gwno))
 
 # Remove infinite numbers
 cru$spei3 <- if_else(is.infinite(cru$spei3), 0, cru$spei3)
@@ -61,10 +66,11 @@ cru$spei3_pos <- cru$spei3_pos - mod2$coefficients["year"]
 
 vdem <- dplyr::mutate(vdem, gwno = countrycode(country, "country.name", "gwn"))
 
-vdem$gwno[vdem$country == "Seychelles"] <- 591
-vdem$gwno[vdem$country == "Vanuatu"] <- 935
-vdem$gwno[vdem$country == "Sao Tome and Principe"] <- 403
-vdem$gwno[vdem$country == "Yemen"] <- 678
+vdem$gwno <- ifelse(vdem$country == "Seychelles", 591,
+                             ifelse(vdem$country == "Vanuatu", 935,
+                                    ifelse(vdem$country == "Sao Tome and Principe", 403,
+                                           ifelse(vdem$country == "Yemen", 678, vdem$gwno))))
+
 
 ##' WB
 #' Her er det mange verdier som mangler, men de er for det meste små stater som ikke er med i countrycodes datasettet. Hva skal man gjøre med dem? Kode manuelt? Se på priogrid og hvordan det er kodet der
@@ -72,44 +78,44 @@ vdem$gwno[vdem$country == "Yemen"] <- 678
 wb <- mutate(wb, gwno = countrycode(country, "country.name", "gwn"))
 
 # Må endre manuelt på mikrostater (og Yemen) som er selvstendige. Ikke-selvstendige stater blir satt til missing på gwno.
-wb$gwno[wb$country == "Dominica"] <- 54
-wb$gwno[wb$country == "Grenada"] <- 55
-wb$gwno[wb$country == "Kiribati"] <- 970
-wb$gwno[wb$country == "Liechtenstein"] <- 223
-wb$gwno[wb$country == "Marshall Islands"] <- 983
-wb$gwno[wb$country == "Micronesia, Fed. Sts."] <- 987
-wb$gwno[wb$country == "Monaco"] <- 221
-wb$gwno[wb$country == "Nauru"] <- 971
-wb$gwno[wb$country == "Palau"] <- 986
-wb$gwno[wb$country == "Samoa"] <- 990
-wb$gwno[wb$country == "San Marino"] <- 331
-wb$gwno[wb$country == "Sao Tome and Principe"] <- 403
-wb$gwno[wb$country == "Seychelles"] <- 591
-wb$gwno[wb$country == "Tonga"] <- 972
-wb$gwno[wb$country == "Tuvalu"] <- 973
-wb$gwno[wb$country == "Vanuatu"] <- 935
-wb$gwno[wb$country == "Yemen"] <- 678
+wb$gwno <- ifelse(wb$country == "Dominica", 54,
+                  ifelse(wb$country == "Grenada", 55,
+                         ifelse(wb$country == "Kiribati", 970,
+                                ifelse(wb$country == "Liechtenstein", 223,
+                                       ifelse(wb$country == "Marshall Islands", 983,
+                                              ifelse(wb$country == "Micronesia, Fed. Sts.", 987,
+                                                     ifelse(wb$country == "Monaco", 221,
+                                                            ifelse(wb$country == "Nauru", 971,
+                                                                   ifelse(wb$country == "Palau", 986,
+                                                                          ifelse(wb$country == "Samoa", 990,
+                                                                                 ifelse(wb$country == "San Marino", 331,
+                                                                                        ifelse(wb$country == "Sao Tome and Principe", 403,
+                                                                                               ifelse(wb$country == "Seychelles", 591,
+                                                                                                      ifelse(wb$country == "Tonga", 972, 
+                                                                                                             ifelse(wb$country == "Tuvalu", 973,
+                                                                                                                    ifelse(wb$country == "Vanuatu", 935,
+                                                                                                                           ifelse(wb$country == "Yemen", 678, wb$gwno)))))))))))))))))
 
 # Kof
 # Samme problem her som for wb, pluss at landmed upper middle income etc. er inkludert. Er vel ikke så farlig, de blir uansett omgjort til na ved merging (?)
 
 kof <- kof %>% mutate(gwno = countrycode(country, "country.name", "gwn"))
 
-kof$gwno[vdem$country == "Andorra"] <- 231
-kof$gwno[vdem$country == "Dominica"] <- 54
-kof$gwno[vdem$country == "Kiribati"] <- 970
-kof$gwno[vdem$country == "Liechtenstein"] <- 223
-kof$gwno[vdem$country == "Marshall Islands"] <- 983
-kof$gwno[vdem$country == "Micronesia, Fed. Sts."] <- 987
-kof$gwno[kof$country == "Monaco"] <- 221
-kof$gwno[kof$country == "Palau"] <- 986
-kof$gwno[kof$country == "Samoa"] <- 990
-kof$gwno[kof$country == "San Marino"] <- 331
-kof$gwno[kof$country == "Sao Tome and Principe"] <- 403
-kof$gwno[kof$country == "Seychelles"] <- 591
-kof$gwno[kof$country == "Tonga"] <- 972
-kof$gwno[kof$country == "Vanuatu"] <- 935
-kof$gwno[kof$country == "Yemen, Rep."] <- 678
+kof$gwno <- ifelse(kof$country == "Andorra", 231, 
+                   ifelse(kof$country == "Dominica", 54,
+                          ifelse(kof$country == "Kiribati", 970,
+                                 ifelse(kof$country == "Liechtenstein", 223,
+                                        ifelse(kof$country == "Marshall Islands", 983,
+                                               ifelse(kof$country == "Micronesia, Fed. Sts.", 987,
+                                                      ifelse(kof$country == "Monaco", 221,
+                                                             ifelse(kof$country == "Palau", 986,
+                                                                    ifelse(kof$country == "Samao", 990,
+                                                                           ifelse(kof$country == "San Marino", 331,
+                                                                                  ifelse(kof$country == "Sao Tome and Principe", 403,
+                                                                                         ifelse(kof$country == "Seychelles", 591,
+                                                                                                ifelse(kof$country == "Tonga", 972, 
+                                                                                                       ifelse(kof$country == "Vanuatu", 935,
+                                                                                                              ifelse(kof$country == "Yemen, Rep.", 678, kof$gwno)))))))))))))))
 
 
 # Merging datasets --------------------------------------------------------
@@ -132,7 +138,22 @@ new_data <- prio_ucdp %>%
   left_join(vdem, by = c("gwno", "year")) %>% 
   left_join(kof, by = c("gwno", "year"))
 
+# Det ser ut til at det skjer noe galt ved merging. Prøver å merge hver for seg.
 
+new_data <- left_join(prio_ucdp, shdi, by = c("xcoord" = "x", "ycoord" = "y", "year" = "mydate"))
+new_data <- left_join(new_data, cru, by = c("xcoord" = "lon", "ycoord" = "lat", "year" = "year"))
+new_data <- left_join(new_data, pop, by = c("xcoord" = "x", "ycoord" = "y", "year" = "mydate"))
+new_data <- left_join(new_data, geoepr, by = c("xcoord" = "x", "ycoord" = "y", "year" = "mydate"))
+new_data <- left_join(new_data, wb, by = c("gwno", "year"))
+new_data <- left_join(new_data, vdem, by = c("gwno", "year")) # Her skjer det noe
+new_data <- left_join(new_data, kof, by = c("gwno", "year")) # Her skjer det absolutt noe. Frem til hit har antall observasjoner forholdt seg likt.
+
+names(vdem)
+names(new_data)
+
+table(vdem$gwno)
+table(kof$gwno)
+table(new_data$gwno)
 
 # Log-transformation of relevant variables --------------------------------
 # conflict skal egentlig være faktor med two levels (ikke numerisk, da kan de bli feil senere ved rf)
