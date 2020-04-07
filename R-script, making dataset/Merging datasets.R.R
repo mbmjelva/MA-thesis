@@ -128,7 +128,7 @@ pop <- questionr::rename.variable(pop, "value", "pop")
 shdi <- questionr::rename.variable(shdi, "value", "shdi")
 geoepr <- questionr::rename.variable(geoepr, "value", "excluded")
 
-# Remove the 15 observations that have missing on the gwno-variable as they create duplicates when joining with the other datasets (create 100 000 extra observations)
+# Remove the 15 observations that have missing on the gwno-variable as they create duplicates when joining with the other datasets (created 10 000 extra observations)
 prio_ucdp <- prio_ucdp %>% filter(!is.na(gwno))
 
 # Join the datasets
