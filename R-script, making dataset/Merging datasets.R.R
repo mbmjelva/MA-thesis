@@ -117,16 +117,21 @@ kof$gwno <- ifelse(kof$country == "Andorra", 231,
 
 
 # Merging datasets --------------------------------------------------------
+
+# Year must be numeric in all datasets as it is part of the joining key
 wb$year <- as.numeric(wb$year)
 prio_ucdp$year <- as.numeric(prio_ucdp$year)
 
 
-# Gjør om navnene slik at det blir enklere å lese, ikke er to som heter "value" (shdi, pop)
+# Rename the variable names so that they are not all called "value" (pop, shdi, excluded)
 pop <- questionr::rename.variable(pop, "value", "pop")
 shdi <- questionr::rename.variable(shdi, "value", "shdi")
 geoepr <- questionr::rename.variable(geoepr, "value", "excluded")
 
+# Remove the 15 observations that have missing on the gwno-variable as they create duplicates when joining with the other datasets (create 100 000 extra observations)
+prio_ucdp <- prio_ucdp %>% filter(!is.na(gwno))
 
+# Join the datasets
 new_data <- prio_ucdp %>% 
   left_join(shdi, by = c("xcoord" = "x", "ycoord" = "y", "year" = "mydate")) %>%
   left_join(cru, by = c("xcoord" = "lon", "ycoord" = "lat", "year" = "year")) %>%
@@ -135,30 +140,6 @@ new_data <- prio_ucdp %>%
   left_join(wb, by = c("gwno", "year")) %>% 
   left_join(vdem, by = c("gwno", "year")) %>% 
   left_join(kof, by = c("gwno", "year"))
-
-# Det ser ut til at det skjer noe galt ved merging. Prøver å merge hver for seg.
-
-new_data <- left_join(prio_ucdp, shdi, by = c("xcoord" = "x", "ycoord" = "y", "year" = "mydate"))
-new_data <- left_join(new_data, cru, by = c("xcoord" = "lon", "ycoord" = "lat", "year" = "year"))
-new_data <- left_join(new_data, pop, by = c("xcoord" = "x", "ycoord" = "y", "year" = "mydate"))
-new_data <- left_join(new_data, geoepr, by = c("xcoord" = "x", "ycoord" = "y", "year" = "mydate"))
-new_data <- left_join(new_data, wb, by = c("gwno", "year"))
-new_data <- left_join(new_data, vdem, by = c("gwno", "year")) # Her skjer det noe
-new_data <- left_join(new_data, kof, by = c("gwno", "year")) # Her skjer det absolutt noe. Frem til hit har antall observasjoner forholdt seg likt.
-
-# Må sjekke year, om det er noe galt der. GWNO skal nå være i orden. 
-
-wb %>% select(year, gwno) %>% filter(gwno == 520) %>% group_by(gwno, year) %>% summarise(n = n())
-kof %>% select(year, gwno) %>% filter(gwno == 520) %>% group_by(gwno, year) %>% summarise(n = n()) # Her er det to land per år med den landekoden
-kof %>% filter(gwno == 520) %>% group_by(country) %>% summarise(n = n()) # Nord-Korea og Sør-Korea har fått samme landekode her. Nord-Korea har fått feil kode.
-wb %>% filter(gwno == 520) %>% group_by(country) %>% summarise(n = n()) 
-vdem %>% filter(gwno == 520) %>% group_by(country) %>% summarise(n = n()) # Somalia og Somaliland are given the same country code. Somaliland has to be set to NA as it is not independent.
-
-
-vdem %>% select(year, gwno, country) %>% filter(gwno == 520) %>% group_by(gwno, year, country) %>% summarise(n = n())
-wb %>% select(year, gwno, country) %>% filter(gwno == 520) %>% group_by(gwno, year, country) %>% summarise(n = n())
-
-prio_ucdp %>% select(year, gwno) %>% filter(gwno == 520) %>% group_by(gwno, year) %>% summarise(n = n())
 
 
 # Log-transformation of relevant variables --------------------------------
@@ -177,6 +158,23 @@ final <- new_data %>%
   juice() %>%
   mutate(conflict = as.factor(conflict))
 
+
+# Lag the variables -------------------------------------------------------
+
+final <- final %>%
+  group_by(gid) %>%
+  arrange(year) %>%
+  recipe(conflict ~ .) %>% # Identifies the kind of model we have
+  remove_role(gid, year, old_role = "predictor") %>% # Remove gid and year from being part of the predictors
+  step_lag(all_predictors(), lag = 1) %>% # Lag all the predictors one year
+  prep() %>% # Estimate the required parameters from a training set that can later be applied to the whole data set
+  juice() # Returns variables from the processed training set (all the lagged variables to the dataset)
+
+
+final <- final %>%
+  group_by(gid) %>%
+  arrange(year) %>%
+  mutate(lag_conflict = lag(conflict))
 
 saveRDS(final, "./Egne datasett/final_dataset.rds")
 
