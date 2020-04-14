@@ -6,6 +6,7 @@ library(countrycode)
 library(questionr)
 library(tidymodels)
 library(stargazer)
+library(naniar)
 
 # Loading datasets --------------------------------------------------------
 
@@ -15,13 +16,11 @@ shdi <- read_rds("./Egne datasett/shdi.rds")
 kof <- read_rds("./Egne datasett/kof.rds")
 vdem <- read_rds("./Egne datasett/vdem.rds")
 pop <- read_rds("./Egne datasett/population.rds")
-cru <- read_rds("./Egne datasett/cru.rds")
+cru <- read_rds("./Egne datasett/cru_w.rds")
 prio_ucdp <- read_rds("./Egne datasett/prio_ucdp_merged.rds")
 
-# Fix cru-variables ---------------------------------
 
-# Remove infinite numbers
-cru$spei3 <- if_else(is.infinite(cru$spei3), 0, cru$spei3)
+# Fix cru-variables ---------------------------------
 
 # Remove all gridcells that cover ocean
 lons <- unique(prio_ucdp$xcoord)
@@ -143,7 +142,6 @@ new_data <- prio_ucdp %>%
 
 
 # Log-transformation of relevant variables --------------------------------
-# conflict skal egentlig være faktor med two levels (ikke numerisk, da kan de bli feil senere ved rf)
 
 log_vars <- c("gdp", "bdist3", "capdist", "ttime_mean")
 
@@ -156,7 +154,17 @@ final <- new_data %>%
   step_log(has_role("log_transform"), offset = 1) %>%
   prep() %>%
   juice() %>%
-  mutate(conflict = as.factor(conflict))
+  mutate(conflict = as.factor(conflict)) # Need conflict to be factor for later analysis
+
+# Check whether any of the variables are missing data for any of the years
+final %>% group_by(year) %>% miss_var_summary() %>% arrange(desc(pct_miss)) %>% filter(pct_miss > 10) %>% print(n = Inf)
+
+# Fill in the missing years with the previous or subsequent year
+final <- final %>% 
+  group_by(gid) %>% 
+  arrange(gid, year) %>% 
+  fill(c(empl_agr, pop, shdi), .direction = "up") %>%
+  fill(c(gdp, excluded, global_ind, gdp), .direction = "down")
 
 
 # Lag the variables -------------------------------------------------------
@@ -170,11 +178,14 @@ final <- final %>%
   prep() %>% # Estimate the required parameters from a training set that can later be applied to the whole data set
   juice() # Returns variables from the processed training set (all the lagged variables to the dataset)
 
-
+# Add lagged depended variable
 final <- final %>%
   group_by(gid) %>%
   arrange(year) %>%
-  mutate(lag_conflict = lag(conflict))
+  mutate(lag_conflict = lag(conflict)) %>%
+  ungroup(gid)
+
+
 
 saveRDS(final, "./Egne datasett/final_dataset.rds")
 
