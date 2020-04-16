@@ -140,6 +140,7 @@ rasterbrick_to_df <- function(rasterbrick, prefix) {
 
 geoepr <- rasterbrick_to_df(geoepr, "excluded_")
 
+geoepr$value <- geoepr$value -1 # Give cells with no excluded groups value 0 instead of 1
 
 # Export ------------------------------------------------------------------
 
