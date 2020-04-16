@@ -5,6 +5,7 @@ library(tidyverse)
 library(naniar)
 library(sf)
 library(viridis)
+library(ggpubr)
 
 
 final <- read_rds("./Egne datasett/final_dataset.rds")
@@ -15,7 +16,7 @@ final <- dplyr::select(final, -starts_with("lag"))
 
 
 final_miss <- final %>% group_by(gid) %>% miss_var_summary() %>% filter(variable == "spei3") %>% as.data.frame() %>% ungroup(gid)
-final_coun <- final %>% group_by(gwno) %>% miss_var_summary() %>% filter(variable == "spei3") %>% as.data.frame() %>% ungroup(gid)
+final_coun <- final %>% group_by(gwno) %>% miss_var_summary() %>% filter(variable == "spei3") %>% as.data.frame() %>% ungroup(gwno)
 
 final_miss2 <- left_join(final_miss, final)
 final_miss3 <- left_join(final_coun, final)
@@ -41,7 +42,7 @@ ggplot() + geom_raster(data = final_miss3, aes(x= lon, y = lat, fill = pct_miss)
 conf <- final_miss2 %>% dplyr::select(lon, lat, conflict) %>% filter(conflict == 1)
 
 # Conflict with SPEI missing values
-ggplot(final_miss2) + geom_raster(aes(x= lon, y = lat)) + #, fill = as.factor(pct_miss))) + 
+ggplot(final_miss2) + geom_raster(aes(x= lon, y = lat, fill = as.factor(pct_miss))) + 
   geom_point(data = conf, aes(x = lon, y = lat, colour = "Conflict"), size = 0.5, alpha = 0.5) + 
   coord_fixed(ratio = 1) +
   scale_fill_manual(values = c("#9AE5E6", "#008279"), labels = c("Not missing", "Missing")) +
@@ -53,38 +54,49 @@ ggplot(final_miss2) + geom_raster(aes(x= lon, y = lat)) + #, fill = as.factor(pc
 
 # Conflict blank
 ggplot(final_miss2) + geom_raster(aes(x= lon, y = lat), fill = "#4EAAAD") + 
-  geom_point(data = conf, aes(x = lon, y = lat, colour = "Conflict"), size = 0.5, alpha = 0.5) + 
+  geom_point(data = conf, aes(x = lon, y = lat, colour = "Conflict"), size = 0.2, alpha = 0.5) + 
   coord_fixed(ratio = 1) +
   scale_colour_manual(values = "black") +
   labs(title = "State-based conflict") +
   theme_bw() +
   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
 
-
+ggsave("./Figurer/conflict geographic distribution.png")
 
 # Other variables with much missing ---------------------------------------
 
-ggplot(final_miss2) + geom_raster(aes(x = lon, y = lat, fill = unempl_tot)) + 
+# Unemployment
+ggplot(final) + geom_raster(aes(x = lon, y = lat, fill = unempl_tot)) + 
   coord_fixed(ratio = 1) +
   theme_bw() +
   scale_fill_viridis(direction = -1) +
-  #scale_fill_manual(values = wes_palette(name = "Royal1")) +
-  #scale_fill_gradientn(colours = c("#9AE5E6", "#008279", "#DB504A", "darkred")) +
   labs(fill = "Unemployment")
 
-
-ggplot(final_miss2) + geom_raster(aes(x= lon, y = lat, fill = excluded)) + 
+# Excluded
+gg_exc_map <- ggplot(final) + geom_raster(aes(x= lon, y = lat, fill = as.factor(excluded))) + 
+  #geom_bar(aes(excluded, fill = as.factor(excluded))) + 
   coord_fixed(ratio = 1) +
-  theme_bw() +
-  scale_fill_viridis(direction = -1)
+  theme_bw() + 
+  labs(fill = "Excluded") +
+  scale_fill_viridis_d(direction = -1, na.value = "grey50")
 
-ggplot(final_miss2) + geom_raster(aes(x= lon, y = lat, fill = shdi)) + 
+gg_exc_bar <- ggplot(final) + geom_bar(aes(as.factor(excluded), fill = as.factor(excluded))) + 
+  theme_bw() + 
+  theme(legend.position = "none") +
+  scale_fill_viridis_d(direction = -1, na.value = "grey50") +
+  labs(x = "Excluded", y = "")
+
+ggarrange(gg_exc_map, gg_exc_bar, nrow = 2)
+
+
+# SHDI
+ggplot(final) + geom_raster(aes(x= lon, y = lat, fill = shdi)) + 
   coord_fixed(ratio = 1) +
-  theme_bw() +
-  scale_fill_viridis(direction = -1)
+  theme_bw() + 
+  scale_fill_viridis()
 
-
-ggplot(final_miss2) + geom_raster(aes(x= lon, y = lat, fill = agri_ih)) +
+# Agriculture in cell
+ggplot(final) + geom_raster(aes(x= lon, y = lat, fill = agri_ih)) +
   coord_fixed(ratio = 1) +
   theme_bw() +
   scale_fill_viridis(direction = -1)
