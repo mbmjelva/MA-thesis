@@ -164,7 +164,7 @@ final <- final %>%
   group_by(gid) %>% 
   arrange(gid, year) %>% 
   fill(c(empl_agr, pop, shdi), .direction = "up") %>%
-  fill(c(gdp, excluded, global_ind, gdp), .direction = "down")
+  fill(c(gdp, excluded, global_ind, gdp, shdi), .direction = "down")
 
 
 # Lag the variables -------------------------------------------------------
