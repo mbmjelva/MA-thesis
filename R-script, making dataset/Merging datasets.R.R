@@ -11,7 +11,7 @@ library(naniar)
 # Loading datasets --------------------------------------------------------
 
 geoepr <- read_rds("./Egne datasett/geoepr.rds")
-wb <- read_rds("./Egne datasett/wbi.rds")
+wb <- read_rds("./Egne datasett/wb.rds")
 shdi <- read_rds("./Egne datasett/shdi.rds")
 kof <- read_rds("./Egne datasett/kof.rds")
 vdem <- read_rds("./Egne datasett/vdem.rds")
@@ -146,7 +146,7 @@ new_data <- prio_ucdp %>%
 log_vars <- c("gdp", "bdist3", "capdist", "ttime_mean")
 
 final <- new_data %>%
-  dplyr::select(gid, year, gwno, lon = xcoord, lat = ycoord, conflict, events, best, spei3, spei3_pos, spei3_neg, temp, 
+  dplyr::select(gid, year, gwno, lon = xcoord, lat = ycoord, conflict, events, best, non_state_conflict, spei3, spei3_pos, spei3_neg, temp, 
                 agri_ih, irrig_sum, bdist3, capdist, ttime_mean, pop, empl_agr, unempl_tot, excluded, shdi, 
                 libdem, global_ind, gdp) %>%
   recipe(.) %>%
