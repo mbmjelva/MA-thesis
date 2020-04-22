@@ -1,4 +1,4 @@
-# Generalized random forest - lagged model #
+# Generalized random forest - lagged model with gwno cluster #
 
 
 library(tidyverse)
@@ -18,11 +18,7 @@ sample_final <- sample_final %>% rename_at(vars(starts_with("lag_1_")),
 # - The full SPEI variable, might be used for robustness check?
 sample_final <- select(sample_final, -best, -events, -spei3)
 
-
-# Reverse the SPEI neg variable so that high value means high dryness
-
 sample_final$spei3_neg <- sample_final$spei3_neg * (-1)
-
 
 # Create training and test data set
 set.seed(125)
@@ -52,16 +48,17 @@ saveRDS(test_speineg, "./R-script, analysis/Models/test_speineg_lagged.rds")
 # Run models --------------------------------------------------------------
 
 # Model with negative SPEI
-cf_neg <- causal_forest(
+cf_neg_gwno <- causal_forest(
   X = model.matrix(~., data = train_speineg[, !(names(train_speineg) %in% c("conflict", "spei3_neg"))]), # exclude the outcome and treatment variables
   Y = as.numeric(train_speineg$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
   W = train_speineg$spei3_neg,
   tune.parameters = "all", # Model tuens all tunable variables
+  clusters = train_speineg$gwno,
   seed = 2865
 )
 
 # Save the model
-save(cf_neg, file = "./R-script, analysis/Models/cf_neg_lagged.rds")
+save(cf_neg_gwno, file = "./R-script, analysis/Models/cf_neg_cluster_gwno.rds")
 
 # Variable importance
 varimp_neg <- cf_neg %>% 
@@ -72,56 +69,15 @@ varimp_neg <- cf_neg %>%
 
 
 # Model with positive SPEI
-cf_pos <- causal_forest(
+cf_pos_gwno <- causal_forest(
   X = model.matrix(~., data = train_speipos[, !(names(train_speipos) %in% c("conflict", "spei3_pos"))]), # exclude the outcome and treatment variables
   Y = as.numeric(train_speipos$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
   W = train_speipos$spei3_pos,
   tune.parameters = "all",
+  clusters = train_speineg$gwno,
   seed = 2865
 )
 
-save(cf_pos, file = "./R-script, analysis/Models/cf_pos_lagged.rds")
-
-# Variable importance
-varimp_pos <- cf_pos %>% 
-  variable_importance() %>% 
-  as.data.frame() %>% 
-  mutate(variable = colnames(cf_pos$X.orig)) %>% 
-  arrange(desc(V1))
+save(cf_pos_gwno, file = "./R-script, analysis/Models/cf_pos_cluster_gwno.rds")
 
 
-## Plots of variable importance
-# SPEI_neg
-# Remove variables that are not explanatory so that not included in the plot
-varimp_neg_wo <- subset(varimp_neg, !variable %in% c("gid", "lon", "lat", "gwno"))
-
-area_color <- c("#3C1518", "#B77659", "#3C1518", "#3C1518", "#3C1518", "#3C1518", "#3C1518",
-                "#3C1518", "#3C1518", "#B77659", "#3C1518", "#3C1518", "#3C1518", "#3C1518",
-                "#3C1518", "#3C1518", "#B77659", "#B77659", "#3C1518", "#3C1518", "#3C1518", 
-                "#3C1518", "#3C1518", "#3C1518", "#3C1518", "#3C1518", "#3C1518", "#B77659")
-#Colors: #B77659, #3C1518, #2D2A32, #842F43
-
-(spei_neg <- ggplot(varimp_neg_wo) + 
-    geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = area_color) + # Reorder order the chategories depending on the values of a second variable (V1)
-    theme_minimal() +
-    #scale_y_continuous(limits = c(0, 0.2)) +
-    labs(x = "", y = "Variable Importance", title = "SPEI3 negative") +
-    coord_flip())
-
-ggsave("./Figurer/speineg_varimp.png")
-
-# SPEI_pos
-# Remove variables that are not explanatory so that not included in the plot
-varimp_pos_wo <- subset(varimp_pos, !variable %in% c("gid", "lon", "lat", "lag_1_lon", "lag_1_lat", "lag_1_spei3", "lag_1_spei3_pos", "lag_1_spei3_neg"))
-
-(spei_pos <- ggplot(varimp_pos_wo) + 
-  geom_bar(aes(reorder(variable, V1), V1), stat = "identity") + # Reorder order the chategories depending on the values of a second variable (V1)
-  theme_minimal() +
-  #scale_y_continuous(limits = c(0, 0.2)) +
-  labs(x = "", y = "Variable Importance", title = "SPEI3 positive") +
-  coord_flip())
-
-
-ggpubr::ggarrange(spei_neg, spei_pos)
-
-ggsave("./Figurer/variable_importence_lagged.png")
