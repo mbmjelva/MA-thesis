@@ -6,9 +6,11 @@ library(finalfit)
 library(tidyverse)
 library(stargazer)
 library(naniar)
-library(MissMech)
+library(corrplot)
 
 final <- read_rds("./Egne datasett/final_dataset.rds")
+
+final <- final %>% filter(!is.na(spei3))
 
 # Check that all variables are coded correctly (acting as expected) ----------------------------
 ff_glimpse(final)
@@ -37,14 +39,16 @@ gg_miss_var(final, show_pct = T) + ylim(0,100) + labs(y = "") # This graph shows
 
 # Identify missing values in each variable --------------------------------
 # Look for patterns
-missing_plot(final) + scale_x_continuous(breaks = seq(0, 1800000, 200000)) # Observation ID on the x-axis, variable on the y-axis 
+missing_plot(final) + scale_x_continuous(breaks = seq(0, 1000000, 1200000)) # Observation ID on the x-axis, variable on the y-axis 
+
+# Egentlig var det seq(0, 1800000, 2000000)
 
 #' There does not seem to be much systemacy in the missing data
 
 
 # Investigate if system in missing based on time --------------------------
 
-final %>% group_by(year) %>% miss_var_summary() %>% arrange(desc(pct_miss)) %>% filter(pct_miss > 20) %>% print(n = Inf)
+final %>% group_by(year) %>% miss_var_summary() %>% arrange(desc(pct_miss)) %>% filter(pct_miss > 5, variable == unempl_tot) %>% print(n = Inf)
 
 #' Does not seem to be any systematic difference in missing values based on years after filling in the years for variables that are completely missing
 #' For geographically missingness, see rscript with "map of missing data"
@@ -52,7 +56,7 @@ final %>% group_by(year) %>% miss_var_summary() %>% arrange(desc(pct_miss)) %>% 
 
 
 # Only look at the vars with a lot of missing
-final_select <- final %>% select(spei3, temp, unempl_tot, excluded, shdi, agri_ih) 
+final_select <- final %>% select(unempl_tot, excluded, shdi, agri_ih) 
 missing_pattern(final_select) 
 
 
@@ -65,7 +69,7 @@ confl_dist <- final %>%
                                      "empl_agr", "unempl_tot", "excluded", "shdi", "libdem", "global_ind", "gdp"), 
                      na_include=TRUE, p=TRUE)
 
-stargazer(confl_dist, summary = F)
+stargazer(confl_dist, type = "text", summary = F)
 
 
 # There seem to be some pattern in the missing data. Observations with very high or very low gid-numbers seem to have a lot of missing on several of the variables.
@@ -97,5 +101,55 @@ final_select$excluded <- as.factor(final_select$excluded)
 gg_miss_fct(final_select, fct = excluded)
 
 final_select %>% group_by(excluded) %>% miss_var_summary() %>% arrange(desc(pct_miss)) %>% print(n = Inf) # Unsure of what to say about this
+
+
+
+
+# Chi square test ---------------------------------------------------------
+
+# Make the variables into dummies for correlation test
+
+final_select_NA <- final %>% select(unempl_tot, excluded, shdi, agri_ih, spei3, temp, year) %>% as.data.frame()
+
+i <- 1
+while(i<=ncol(final_select_NA)) {
+  final_select_NA[[i]] = ifelse(is.na(final_select_NA[[i]]) == TRUE, 1, 0)
+  i <- i + 1
+}
+
+
+cor(final_select_NA)
+corrplot(cor(final_select_NA))
+# Not too bad.
+
+
+# Graph of missing data in unempl_tot over years
+final_select <- final %>% select(unempl_tot, excluded, shdi, agri_ih, year) 
+
+gg_miss_var(final_select, facet = year, show_pct = T) + ylim(0,100) + labs(y = "") # %>% facet_grid(~year)
+
+final_select$unempl_tot_NA <- ifelse(is.na(final_select$unempl_tot), 1, 0)
+final_select %>% group_by(year) %>% summarise(percent = length(unempl_tot_NA == 1)/length(unempl_tot_NA))
+
+final_select_NA %>% mutate(pct = (pct(unempl_tot == 1)))
+ggplot(final_select_NA) + geom_abline(aes(x = year, y = pct(unempl_tot == 1)))
+
+prop.table(table(final_select_NA$unempl_tot))
+
+
+unempl_miss <- final %>% group_by(year) %>% miss_var_summary() %>% arrange(desc(pct_miss)) %>% filter(variable == "unempl_tot") %>% as.data.frame()
+
+final %>% 
+  group_by(year) %>% 
+  miss_var_summary() %>% 
+  arrange(desc(pct_miss)) %>% 
+  filter(variable == "unempl_tot") %>%
+  ggplot() + 
+  geom_line(aes(year, pct_miss), stat = "identity") +
+  theme_bw() +
+  labs(x = "Year", y = "Percentage missing", title = "Percentage of missing information for unemployment") +
+  scale_x_continuous(breaks = seq(1990, 2015, 5))
+  
+  
 
 

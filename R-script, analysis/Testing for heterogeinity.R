@@ -20,7 +20,6 @@ hist(tau.hat, density = 25, breaks = 40, col = "#B77659", xlab = "Estimated trea
 hist_speipos <- hist(tau.hat_pos, density = 20, breaks = 40,  col = "#B77659", xlab = "Estimated treatment effects", main = "SPEI3 positive")
 
 
-
 # Estimate the average treatment effect
 ate.hat <- average_partial_effect(cf_neg)
 print(paste("95% CI for ATE:", round(ate.hat["estimate"], 3), "+/-", round(1.96 * ate.hat["std.err"], 3)))
@@ -53,8 +52,8 @@ tau.hat <- predict(cf_neg)$predictions
 het_test_pos <- test_calibration(cf_pos_dich)
 tau.hat_pos <- predict(cf_pos_dich)$predictions
 
-hist(tau.hat, density = 25, breaks = 40, col = "#B77659", xlab = "Estimated treatment effects", main = "SPEI3 negative")
-hist(tau.hat_pos, density = 20, breaks = 40,  col = "#B77659", xlab = "Estimated treatment effects", main = "SPEI3 positive")
+hist(tau.hat, density = 20, breaks = 50, col = "#B77659", xlab = "Estimated treatment effects", main = "SPEI3 negative")
+hist(tau.hat_pos, density = 20, breaks = 50,  col = "#B77659", xlab = "Estimated treatment effects", main = "SPEI3 positive")
 
 
 
@@ -68,13 +67,13 @@ print(paste("95% CI for ATE:", round(ate.hat_pos["estimate"], 3), "+/-", round(1
 
 
 # Add all info to one graph
-stargazer::stargazer(het_test, het_test_pos, type = "text",
+stargazer::stargazer(het_test, het_test_pos,
                      column.labels = c("SPEI3 neg", "SPEI3 pos"),
                      dep.var.caption = "",
                      covariate.labels = c("Mean forest prediction", "Differential forest prediction"),
-                     #add.lines = list(c("Estimated treatment effect", "0.123***", "-0.080***"),
-                      #                c("", "(0.008)", "(0.008)")),
+                     add.lines = list(c("Average treatment effect", "-0.977***", "-0.732***"),
+                                      c("", "(0.007)", "(0.005)")),
                      out = "./Figurer/Differential forest prediction_speidich.html")
 
-
+??observation_weights
 
