@@ -6,12 +6,12 @@ library(tidyverse)
 load(file = "./R-script, analysis/Models/cates_neg_speidich_with_target.rds")
 
 cates_neg %>% filter(variable %in% c("libdem", "temp", "capdist", "bdist", "ttime_mean", "global_ind", "pop")) %>% 
-  ggplot(aes(y = as.factor(round(quantile, digits = 1)), x = ape, xmin = apemin, xmax = apemax, color = significant)) + 
+  ggplot(aes(y = as.factor(round(quantile, digits = 1)), x = cate, xmin = catemin, xmax = catemax, color = significant)) + 
   facet_grid(vars(variable), scales = "free") +
   geom_point() + 
   geom_errorbar() + 
   theme_light() +
-  scale_x_continuous(limits = c(-0.095, 0.015), breaks = seq(-0.09, 0.01, 0.01)) +
+  #scale_x_continuous(limits = c(-0.095, 0.015), breaks = seq(-0.09, 0.01, 0.01)) +
   theme(
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),
@@ -28,12 +28,12 @@ cates_neg %>% filter(variable %in% c("libdem", "temp", "capdist", "bdist", "ttim
 ggsave("./Figurer/cates_neg, speidich, target, seven variables 1.png", height = 15, width = 11)
 
 cates_neg %>% filter(variable %in% c("gdp", "shdi", "empl_agr", "irrig_sum", "agri_ih", "excluded", "lag_conflict", "non_state_conflict")) %>% 
-  ggplot(aes(y = as.factor(round(quantile, digits = 1)), x = ape, xmin = apemin, xmax = apemax, color = significant)) + 
+  ggplot(aes(y = as.factor(round(quantile, digits = 1)), x = cate, xmin = catemin, xmax = catemax, color = significant)) + 
   facet_grid(vars(variable), scales = "free") +
   geom_point() + 
   geom_errorbar() + 
   theme_light() +
-  scale_x_continuous(limits = c(-0.095, 0.015), breaks = seq(-0.09, 0.01, 0.01)) +
+  #scale_x_continuous(limits = c(-0.095, 0.015), breaks = seq(-0.09, 0.01, 0.01)) +
   theme(
     panel.grid.major.x = element_blank(),
     panel.grid.minor.x = element_blank(),

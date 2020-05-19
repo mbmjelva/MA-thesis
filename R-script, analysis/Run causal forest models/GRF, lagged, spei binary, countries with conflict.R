@@ -1,4 +1,6 @@
-# Generalized random forest - lagged model, SPEI binary, alternative cut-point SPEI #
+# Generalized random forest - lagged model, SPEI binary #
+
+# This GRF is run only with cells within countries that have experienced conflict
 
 
 library(tidyverse)
@@ -19,8 +21,14 @@ sample_final <- sample_final %>% rename_at(vars(starts_with("lag_1_")),
 sample_final <- select(sample_final, -best, -events, -spei3)
 
 # Make the spei variables binary
-sample_final <- sample_final %>% mutate(spei3_neg = ifelse(spei3_neg < (-1.5), 1, 0),
-                                        spei3_pos = ifelse(spei3_pos > 1.5, 1, 0))
+sample_final <- sample_final %>% mutate(spei3_neg = ifelse(spei3_neg < (-1), 1, 0),
+                                        spei3_pos = ifelse(spei3_pos > 1, 1, 0))
+
+
+# Select cells within countries that have experienced conflict (where at least one of the cells within one of the year within that country have conflict == 1)
+
+sample_final <- sample_final %>% group_by(gwno) %>% filter(any(conflict == 1)) %>% ungroup(gwno)
+
 
 # Create training and test data set
 set.seed(125)
@@ -42,25 +50,26 @@ train_speineg <- select(train_nona, -spei3_pos)
 test_speipos <- select(test_nona, -spei3_neg)
 test_speineg <- select(test_nona, -spei3_pos)
 
-saveRDS(train_speipos, "./R-script, analysis/Models/train_speipos_lagged_speidich_altcutpoint.rds")
-saveRDS(train_speineg, "./R-script, analysis/Models/train_speineg_lagged_speidich_altcutpoint.rds")
+saveRDS(train_speipos, "./R-script, analysis/Models/train_speipos_lagged_speidich_only_conflict.rds")
+saveRDS(train_speineg, "./R-script, analysis/Models/train_speineg_lagged_speidich_only_conflict.rds")
 
-saveRDS(test_speipos, "./R-script, analysis/Models/test_speipos_lagged_speidich_altcutpoint.rds")
-saveRDS(test_speineg, "./R-script, analysis/Models/test_speineg_lagged_speidich_altcutpoint.rds")
+saveRDS(test_speipos, "./R-script, analysis/Models/test_speipos_lagged_speidich_only_conflict.rds")
+saveRDS(test_speineg, "./R-script, analysis/Models/test_speineg_lagged_speidich_only_conflict.rds")
 
 # Run models --------------------------------------------------------------
 
+# Note: all tunable parameters set to default. End up that way also if choose to tune automatically by the model. Not tuning shorten the runtime.
+
 # Model with negative SPEI
 cf_neg_speidich <- causal_forest(
-  X = model.matrix(~., data = train_speineg[, !(names(train_speineg) %in% c("conflict", "spei3_neg"))]), # exclude the outcome and treatment variables
+  X = model.matrix(~., data = train_speineg[, !(names(train_speineg) %in% c("conflict", "spei3_neg"))]),
   Y = as.numeric(train_speineg$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
   W = train_speineg$spei3_neg,
-  tune.parameters = "all", # Model tuens all tunable parameters that are set to NULL
   seed = 2865
 )
 
 # Save the model
-save(cf_neg_speidich, file = "./R-script, analysis/Models/cf_neg_lagged_speidich_altcutpoint.rds")
+save(cf_neg_speidich, file = "./R-script, analysis/Models/cf_neg_lagged_speidich_only_conflict.rds")
 
 
 # Model with positive SPEI
@@ -68,10 +77,9 @@ cf_pos_speidich <- causal_forest(
   X = model.matrix(~., data = train_speipos[, !(names(train_speipos) %in% c("conflict", "spei3_pos"))]), # exclude the outcome and treatment variables
   Y = as.numeric(train_speipos$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
   W = train_speipos$spei3_pos,
-  tune.parameters = "all",
   seed = 2865
 )
 
-save(cf_pos_speidich, file = "./R-script, analysis/Models/cf_pos_lagged_speidich_altcutpoint.rds")
+save(cf_pos_speidich, file = "./R-script, analysis/Models/cf_pos_lagged_speidich_only_conflict.rds")
 
 
