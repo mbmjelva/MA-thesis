@@ -164,7 +164,7 @@ final <- final %>%
   group_by(gid) %>% 
   arrange(gid, year) %>% 
   fill(c(empl_agr, pop, shdi), .direction = "up") %>%
-  fill(c(gdp, excluded, global_ind, gdp, shdi), .direction = "down")
+  fill(c(excluded, global_ind, gdp, shdi), .direction = "down")
 
 
 # Lag the variables -------------------------------------------------------
@@ -186,6 +186,19 @@ final <- final %>%
   ungroup(gid)
 
 
+# Add continent variable --------------------------------------------------
+
+final <- final %>% mutate(continent = countrycode(sourcevar = gwno, origin = "gwn", 
+                                                                destination = "continent"))
+
+final$continent <- ifelse(final$gwno %in% c(265, 315, 345, 347), "Europe", 
+                            ifelse(final$gwno %in% c(678, 680, 816), "Asia",
+                                   ifelse(final$gwno %in% c(403, 591), "Africa",
+                                          ifelse(final$gwno %in% c(935, 970, 971, 972, 973, 983, 986, 987, 990), "Oceania",
+                                                 ifelse(final$gwno %in% c(54, 55, 56, 57, 58, 60), "Americas", final$continent)))))
+
+
+# Save dataset ------------------------------------------------------------
 
 saveRDS(final, "./Egne datasett/final_dataset.rds")
 
