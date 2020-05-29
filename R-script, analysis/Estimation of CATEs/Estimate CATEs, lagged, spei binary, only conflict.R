@@ -53,8 +53,8 @@ save(cates_neg, file = "./R-script, analysis/Models/cates_neg_speidich_with_targ
 
 load(file = "./R-script, analysis/Models/cf_pos_lagged_speidich_only_conflict.rds")
 
-train_speipos <- readRDS(file = "./R-script, analysis/Models/train_speipos_lagged_speidich.rds")
-test_speipos <- readRDS(file = "./R-script, analysis/Models/test_speipos_lagged_speidich.rds")
+train_speipos <- readRDS(file = "./R-script, analysis/Models/train_speipos_lagged_speidich_only_conflict.rds")
+test_speipos <- readRDS(file = "./R-script, analysis/Models/test_speipos_lagged_speidich_only_conflict.rds")
 
 # Tester med numerisk variabel
 test_speipos$lag_conflict <- as.numeric(as.character(test_speipos$lag_conflict))
