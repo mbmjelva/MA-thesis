@@ -6,8 +6,8 @@ library(tidyverse)
 library(grf)
 library(finalfit)
 
-load(file = "./R-script, analysis/Models/cf_pos_lagged_speidich_only_conflict.rds")
 
+# Fix the dataset ---------------------------------------------------------
 sample_final <- readRDS("./Egne datasett/resampled_data_lagged.rds")
 
 # Renomve prefix for all variables so that easier to work with (lagged conflict stays the same as starts only with lag_)
@@ -30,7 +30,10 @@ train_nona <- na.exclude(sample_final)
 train_speipos <- select(train_nona, -spei3_neg)
 train_speineg <- select(train_nona, -spei3_pos)
 
-# Test of the overlap assumption - propensity scores
+
+# Test of the overlap assumption ------------------------------------------
+
+# SPEI3 pos
 X <- model.matrix(~., data = train_speipos[, !(names(train_speipos) %in% c("conflict", "spei3_pos"))])
 W <- train_speipos$spei3_pos
 
@@ -40,7 +43,7 @@ saveRDS(propensity.forest_pos, "./R-script, analysis/Models/overlap_ass_pos.rds"
 W.hat <- predict(propensity.forest_pos)$predictions
 hist(W.hat, xlab = "propensity score", density = 25, breaks = 40, col = "#3C1518", main = "SPEI3 positive")
 
-# Test of the overlap assumption - propensity scores
+# SPEI3 neg
 X_neg <- model.matrix(~., data = train_speineg[, !(names(train_speineg) %in% c("conflict", "spei3_neg"))])
 W_neg <- train_speineg$spei3_neg
 
@@ -50,9 +53,9 @@ saveRDS(propensity.forest_neg, "./R-script, analysis/Models/overlap_ass_neg.rds"
 W.hat <- predict(propensity.forest_neg)$predictions
 hist(W.hat, xlab = "propensity score", density = 25, breaks = 40, col = "#3C1518", main = "SPEI3 negative")
 
-# Check if the median values vary between the groups of the treatment variable
-final <- read_rds("./Egne datasett/final_dataset.rds")
 
+
+# Check if median values vary between groups of treatment variable --------
 sample_final$spei3_neg_fact <- as.factor(sample_final$spei3_neg)
 sample_final$spei3_pos_fact <- as.factor(sample_final$spei3_pos)
 
@@ -72,5 +75,19 @@ spei_dist_pos_binary <- sample_final %>%
                      na_include=TRUE, cont = "median")
 
 stargazer::stargazer(spei_dist_pos_binary, summary = F, title = "Median and SD, SPEI3 positive")
+
+
+
+# Estimate difference between ATE and ATT ---------------------------------
+
+att_neg <- average_treatment_effect(cf_neg_speidich, target.sample = "treated")
+ate_neg <- average_treatment_effect(cf_neg_speidich)
+
+att_pos <- average_treatment_effect(cf_pos_speidich, target.sample = "treated")
+ate_pos <- average_treatment_effect(cf_pos_speidich)
+
+df_at <- rbind(ate_neg, att_neg, ate_pos, att_pos)
+
+stargazer::stargazer(df_at, summary = F)
 
 
