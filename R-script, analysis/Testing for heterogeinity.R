@@ -46,11 +46,11 @@ load(file = "./R-script, analysis/Models/cf_pos_lagged_speidich.rds")
 load(file = "./R-script, analysis/Models/cf_neg_lagged_speidich.rds")
 
 # Estimate the treatment heterogeneity
-het_test <- test_calibration(cf_neg)
-tau.hat <- predict(cf_neg)$predictions
+het_test <- test_calibration(cf_neg_speidich)
+tau.hat <- predict(cf_neg_speidich)$predictions
 
-het_test_pos <- test_calibration(cf_pos_dich)
-tau.hat_pos <- predict(cf_pos_dich)$predictions
+het_test_pos <- test_calibration(cf_pos_speidich)
+tau.hat_pos <- predict(cf_pos_speidich)$predictions
 
 hist(tau.hat, density = 20, breaks = 50, col = "#B77659", xlab = "Estimated treatment effects", main = "SPEI3 negative")
 hist(tau.hat_pos, density = 20, breaks = 50,  col = "#B77659", xlab = "Estimated treatment effects", main = "SPEI3 positive")
@@ -58,11 +58,11 @@ hist(tau.hat_pos, density = 20, breaks = 50,  col = "#B77659", xlab = "Estimated
 
 
 # Estimate the average treatment effect
-ate.hat <- average_partial_effect(cf_neg)
+ate.hat <- average_partial_effect(cf_neg_speidich)
 print(paste("95% CI for ATE:", round(ate.hat["estimate"], 3), "+/-", round(1.96 * ate.hat["std.err"], 3)))
 
 # Estimate the average treatment effect
-ate.hat_pos <- average_partial_effect(cf_pos_dich)
+ate.hat_pos <- average_partial_effect(cf_pos_speidich)
 print(paste("95% CI for ATE:", round(ate.hat_pos["estimate"], 3), "+/-", round(1.96 * ate.hat_pos["std.err"], 3)))
 
 
@@ -75,5 +75,38 @@ stargazer::stargazer(het_test, het_test_pos,
                                       c("", "(0.007)", "(0.005)")),
                      out = "./Figurer/Differential forest prediction_speidich.html")
 
-??observation_weights
+
+# SPEI dichotomous, only conflict ------------------------------------------
+
+load(file = "./R-script, analysis/Models/cf_pos_lagged_speidich_only_conflict.rds")
+load(file = "./R-script, analysis/Models/cf_neg_lagged_speidich_only_conflict.rds")
+
+# Estimate the treatment heterogeneity
+het_test <- test_calibration(cf_neg_speidich)
+tau.hat <- predict(cf_neg_speidich)$predictions
+
+het_test_pos <- test_calibration(cf_pos_speidich)
+tau.hat_pos <- predict(cf_pos_speidich)$predictions
+
+
+hist(tau.hat, density = 20, breaks = 50, col = "#B77659", xlab = "Estimated treatment effects", main = "SPEI3 negative")
+hist(tau.hat_pos, density = 20, breaks = 50,  col = "#B77659", xlab = "Estimated treatment effects", main = "SPEI3 positive")
+
+
+
+# Estimate the ATT
+ate.hat <- average_treatment_effect(cf_neg_speidich, target.sample = "treated")
+print(paste("95% CI for ATE:", round(ate.hat["estimate"], 3), "+/-", round(1.96 * ate.hat["std.err"], 3)))
+
+# Estimate the ATT
+ate.hat_pos <- average_treatment_effect(cf_pos_speidich, target.sample = "treated")
+print(paste("95% CI for ATE:", round(ate.hat_pos["estimate"], 3), "+/-", round(1.96 * ate.hat_pos["std.err"], 3)))
+
+
+# Add all info to one graph
+stargazer::stargazer(het_test, het_test_pos, #type = "text",
+                     column.labels = c("SPEI3 neg", "SPEI3 pos"),
+                     dep.var.caption = "",
+                     covariate.labels = c("Mean forest prediction", "Differential forest prediction"),
+                     out = "./Figurer/Differential forest prediction_speidich.html")
 
