@@ -21,15 +21,15 @@ att_pos <- average_treatment_effect(cf_pos_speidich, target.sample = "treated")
 test_speineg$lag_conflict <- as.numeric(as.character(test_speineg$lag_conflict))
 train_speineg$lag_conflict <- as.numeric(as.character(train_speineg$lag_conflict))
 
-test_speineg <- dplyr::select(test_speineg, -conflict, -spei3_neg, -lon, -lat, -gwno)# Must remove the cluster-variable and treatment and outcome
-train_speineg <- dplyr::select(train_speineg, -conflict, -spei3_neg, -lon, -lat, -gwno)
+test_speineg <- dplyr::select(test_speineg, -conflict, -spei3_neg, -lon, -lat, -gwno, -continent)# Must remove the cluster-variable and treatment and outcome
+train_speineg <- dplyr::select(train_speineg, -conflict, -spei3_neg, -lon, -lat, -gwno, -continent)
 
 catt_neg <- tibble()
 
 vars <- names(test_speineg)
 
 for(var in vars){
-  var_quantiles <- quantile(train_speineg[[var]], probs = seq(0, 1, 0.25))
+  var_quantiles <- quantile(train_speineg[[var]], probs = seq(0.05, 0.95, 0.25))
   for(i in 1:length(var_quantiles)){
     qtl <- var_quantiles[i]
     qtl_l <- var_quantiles[i-1]
@@ -58,8 +58,8 @@ save(catt_neg, file = "./R-script, analysis/Models/catt_neg_speidich_only_confli
 test_speipos$lag_conflict <- as.numeric(as.character(test_speipos$lag_conflict))
 train_speipos$lag_conflict <- as.numeric(as.character(train_speipos$lag_conflict))
 
-test_speipos <- dplyr::select(test_speipos, -conflict, -spei3_pos, -lon, -lat, -gwno)# Must remove the cluster-variable and treatment and outcome
-train_speipos <- dplyr::select(train_speipos, -conflict, -spei3_pos, -lon, -lat, -gwno)
+test_speipos <- dplyr::select(test_speipos, -conflict, -spei3_pos, -lon, -lat, -gwno, -continent)# Must remove the cluster-variable and treatment and outcome
+train_speipos <- dplyr::select(train_speipos, -conflict, -spei3_pos, -lon, -lat, -gwno, -continent)
 
 catt_pos <- tibble()
 
