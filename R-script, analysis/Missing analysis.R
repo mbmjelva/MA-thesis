@@ -18,8 +18,8 @@ ff_glimpse(final)
 #' First have a look at all the variables (both lagged and not lagged). The coding seems okay. 
 #' No difference in percent of missing between lagged and not lagged variables.
 
-#' Continue the analysis only with variables that are not lagged.
-final <- select(final, -starts_with("lag"))
+#' Continue the analysis only with variables that are not lagged. Unemployment will not be part of the analysis (too much missingness)
+final <- select(final, -starts_with("lag"), -unempl_tot, -events, -best, -bdist3, -continent)
 
 missing_info <- final %>% 
   miss_var_summary() %>% # Can keep the original order of rows if order = F. Can alternatively use ff_glimpse, gives more info.
@@ -28,20 +28,15 @@ missing_info <- final %>%
   select("Variable" = variable, "Not missing", "Number missing" = n_miss, "Percent missing" = pct_miss) # Reorder order of the columns
 
 
-# Make table 1 (?) in the appendix
+# Make tabl of missing data in the appendix 
 stargazer(missing_info,
           summary = F, 
           digits = 1)
 
-gg_miss_var(final, show_pct = T) + ylim(0,100) + labs(y = "") # This graph shows the same thing as the table
-
-# About 40% missing in the CRU-variables because of aggregation method (only places with arable land included)
 
 # Identify missing values in each variable --------------------------------
 # Look for patterns
-missing_plot(final) + scale_x_continuous(breaks = seq(0, 1000000, 1200000)) # Observation ID on the x-axis, variable on the y-axis 
-
-# Egentlig var det seq(0, 1800000, 2000000)
+missing_plot(final) 
 
 #' There does not seem to be much systemacy in the missing data
 
@@ -56,7 +51,7 @@ final %>% group_by(year) %>% miss_var_summary() %>% arrange(desc(pct_miss)) %>% 
 
 
 # Only look at the vars with a lot of missing
-final_select <- final %>% select(unempl_tot, excluded, shdi, agri_ih) 
+final_select <- final %>% select(excluded, shdi, agri_ih) 
 missing_pattern(final_select) 
 
 
@@ -66,18 +61,11 @@ missing_pattern(final_select)
 confl_dist <- final %>% 
   summary_factorlist(dependent = "conflict", 
                      explanatory = c("spei3_pos", "spei3_neg", "temp", "agri_ih", "irrig_sum", "bdist3", "capdist", "ttime_mean", "pop",
-                                     "empl_agr", "unempl_tot", "excluded", "shdi", "libdem", "global_ind", "gdp"), 
+                                     "empl_agr", "excluded", "shdi", "libdem", "global_ind", "gdp"), 
                      na_include=TRUE, p=TRUE)
 
 stargazer(confl_dist, type = "text", summary = F)
 
-
-# There seem to be some pattern in the missing data. Observations with very high or very low gid-numbers seem to have a lot of missing on several of the variables.
-
-missing_pairs(final, dependent = "spei3",
-              explanatory = c("temp", "agri_ih", "irrig_sum", "bdist3", "capdist", "ttime_mean", "pop",
-                              "empl_agr", "unempl_tot", "excluded", "shdi", "libdem", "global_ind", "gdp"), 
-              position = "fill")
 
 
 ## Mirca missing values
@@ -90,26 +78,15 @@ pp <- left_join(prio_ucdp, mirca, by = c("xcoord" = "x", "ycoord" = "y"))
 ff_glimpse(pp)
 ff_glimpse(final)
 
-# Det er mirca som er årsak til det store antallet missing i SPEI
-
-
-# Visualize the relationship between missing in variables -----------------
-gg_miss_upset(final_select) # På denne bør jeg kanskje velge ut noen variabler
-
-# As there seem to be a high number of observations that have missing values on both temp, spei and excluded, I investigate whether there is a big difference for the different excluded categories
-final_select$excluded <- as.factor(final_select$excluded)
-gg_miss_fct(final_select, fct = excluded)
-
-final_select %>% group_by(excluded) %>% miss_var_summary() %>% arrange(desc(pct_miss)) %>% print(n = Inf) # Unsure of what to say about this
-
-
+# Proof that MIRCA is the reason for the missing data in the SPEI variables
 
 
 # Chi square test ---------------------------------------------------------
 
 # Make the variables into dummies for correlation test
 
-final_select_NA <- final %>% select(unempl_tot, excluded, shdi, agri_ih, spei3, temp, year) %>% as.data.frame()
+
+final_select_NA <- final %>% select(excluded, shdi, agri_ih) %>% as.data.frame()
 
 i <- 1
 while(i<=ncol(final_select_NA)) {
@@ -122,34 +99,5 @@ cor(final_select_NA)
 corrplot(cor(final_select_NA))
 # Not too bad.
 
-
-# Graph of missing data in unempl_tot over years
-final_select <- final %>% select(unempl_tot, excluded, shdi, agri_ih, year) 
-
-gg_miss_var(final_select, facet = year, show_pct = T) + ylim(0,100) + labs(y = "") # %>% facet_grid(~year)
-
-final_select$unempl_tot_NA <- ifelse(is.na(final_select$unempl_tot), 1, 0)
-final_select %>% group_by(year) %>% summarise(percent = length(unempl_tot_NA == 1)/length(unempl_tot_NA))
-
-final_select_NA %>% mutate(pct = (pct(unempl_tot == 1)))
-ggplot(final_select_NA) + geom_abline(aes(x = year, y = pct(unempl_tot == 1)))
-
-prop.table(table(final_select_NA$unempl_tot))
-
-
-unempl_miss <- final %>% group_by(year) %>% miss_var_summary() %>% arrange(desc(pct_miss)) %>% filter(variable == "unempl_tot") %>% as.data.frame()
-
-final %>% 
-  group_by(year) %>% 
-  miss_var_summary() %>% 
-  arrange(desc(pct_miss)) %>% 
-  filter(variable == "unempl_tot") %>%
-  ggplot() + 
-  geom_line(aes(year, pct_miss), stat = "identity") +
-  theme_bw() +
-  labs(x = "Year", y = "Percentage missing", title = "Percentage of missing information for unemployment") +
-  scale_x_continuous(breaks = seq(1990, 2015, 5))
-  
-  
 
 
