@@ -6,7 +6,6 @@
 library(tidyverse)
 library(countrycode)
 
-# setwd("/Users/mathildemjelva/Library/Mobile Documents/com~apple~CloudDocs/Mastergrad/Masteroppgave/R-master/")
 pop <- readRDS("./Data/Population density/gpw4_population_density_interpolated.rds")
 
 

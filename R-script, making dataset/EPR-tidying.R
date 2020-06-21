@@ -4,9 +4,6 @@
 
 library(tidyverse)
 
-# setwd("/Users/mathildemjelva/Library/Mobile Documents/com~apple~CloudDocs/Mastergrad/Masteroppgave/R-master/")
-
-
 
 # Funksjoner som må til for å lage geoepr ---------------------------------
 

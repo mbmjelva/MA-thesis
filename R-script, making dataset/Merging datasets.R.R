@@ -1,6 +1,10 @@
 
 ## Constructing dataset - R ##
 
+# This script builds on the scripts where the data from different sources are collected and tidied.
+# The datasets loaded here are made in the previous scripts
+# Those must be run first, in addition to the "merge priogrid and ucdp" - script, before running this code.
+
 library(tidyverse)
 library(countrycode)
 library(questionr)
@@ -48,13 +52,8 @@ cru$spei3_pos <- cru$spei3_pos - mod2$coefficients["year"]
 
 # Changing country to gwno for all variables to be matched by country ------------------------------
 
-# Fra priogrid er det kun de landene som er independent på det gitte tidspunktet som tas med. De som ikke er independent skrives om til missing. 
-# Altså er det kun de som blir missing under og som er småstater som må endres på manuelt, hvis de korresponderer med priogrid.
-
-
 ## vdem
-#' Kommentar: Palestina og Hong Kong må settes til NA fordi de ikke er selvstendige stater
-#' Mikrostatene er inkludert i priogrid, men får ikek tl å konvertere dem (muligens ikke inkludert i countrycodes). Endrer manuelt etterpå. Yemen måtte bare bytte navn.
+#' Comment: Only independent states are given GWNO-codes
 #' 
 
 vdem <- dplyr::mutate(vdem, gwno = countrycode(country, "country.name", "gwn"))
@@ -68,11 +67,9 @@ vdem$gwno <- ifelse(vdem$country == "Seychelles", 591,
 
 
 ##' WB
-#' Her er det mange verdier som mangler, men de er for det meste små stater som ikke er med i countrycodes datasettet. Hva skal man gjøre med dem? Kode manuelt? Se på priogrid og hvordan det er kodet der
 
 wb <- mutate(wb, gwno = countrycode(country, "country.name", "gwn"))
 
-# Må endre manuelt på mikrostater (og Yemen) som er selvstendige. Ikke-selvstendige stater blir satt til missing på gwno.
 wb$gwno <- ifelse(wb$country == "Dominica", 54,
                   ifelse(wb$country == "Grenada", 55,
                          ifelse(wb$country == "Kiribati", 970,
@@ -92,7 +89,6 @@ wb$gwno <- ifelse(wb$country == "Dominica", 54,
                                                                                                                            ifelse(wb$country == "Yemen", 678, wb$gwno)))))))))))))))))
 
 # Kof
-# Samme problem her som for wb, pluss at landmed upper middle income etc. er inkludert. Er vel ikke så farlig, de blir uansett omgjort til na ved merging (?)
 
 kof <- kof %>% mutate(gwno = countrycode(country, "country.name", "gwn"))
 
@@ -201,6 +197,5 @@ final$continent <- ifelse(final$gwno %in% c(265, 315, 345, 347), "Europe",
 # Save dataset ------------------------------------------------------------
 
 saveRDS(final, "./Egne datasett/final_dataset.rds")
-
 
 

@@ -3,6 +3,7 @@
 ### V-DEM - tidying ###
 #######################
 
+# Make data fit to be merged with other data for analysis
 
 library(tidyverse)
 
@@ -12,7 +13,6 @@ vdem <- vdem %>% dplyr::select(country_name, country_id, year, v2x_libdem, e_mig
   mutate(country = country_name, libdem = v2x_libdem, gdp = e_migdppc)
 
 vdem <- vdem %>% select(country, year, libdem, gdp)
-
 
 saveRDS(vdem, file = "./Egne datasett/vdem.rds")
 
