@@ -54,27 +54,20 @@ saveRDS(test_speineg, "./R-script, analysis/Models/test_speineg_lagged.rds")
 # Model with negative SPEI
 cf_neg <- causal_forest(
   X = model.matrix(~., data = train_speineg[, !(names(train_speineg) %in% c("conflict", "spei3_neg"))]), # exclude the outcome and treatment variables
-  Y = as.numeric(train_speineg$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
+  Y = as.numeric(train_speineg$conflict) - 1, # convert outcome to 0 or 1 
   W = train_speineg$spei3_neg,
-  tune.parameters = "all", # Model tuens all tunable variables
+  tune.parameters = "all", # Model tunes all tunable variables
   seed = 2865
 )
 
 # Save the model
 save(cf_neg, file = "./R-script, analysis/Models/cf_neg_lagged.rds")
 
-# Variable importance
-varimp_neg <- cf_neg %>% 
-  variable_importance() %>% 
-  as.data.frame() %>% 
-  mutate(variable = colnames(cf_neg$X.orig)) %>% 
-  arrange(desc(V1))
-
 
 # Model with positive SPEI
 cf_pos <- causal_forest(
   X = model.matrix(~., data = train_speipos[, !(names(train_speipos) %in% c("conflict", "spei3_pos"))]), # exclude the outcome and treatment variables
-  Y = as.numeric(train_speipos$conflict) - 1, # convert outcome to 0 or 1 (når gjør om til numeric vil levels bli 1 og 2, trekker fra 1 for å få 0 og 1 i stedet)
+  Y = as.numeric(train_speipos$conflict) - 1, # convert outcome to 0 or 1
   W = train_speipos$spei3_pos,
   tune.parameters = "all",
   seed = 2865
@@ -82,46 +75,3 @@ cf_pos <- causal_forest(
 
 save(cf_pos, file = "./R-script, analysis/Models/cf_pos_lagged.rds")
 
-# Variable importance
-varimp_pos <- cf_pos %>% 
-  variable_importance() %>% 
-  as.data.frame() %>% 
-  mutate(variable = colnames(cf_pos$X.orig)) %>% 
-  arrange(desc(V1))
-
-
-## Plots of variable importance
-# SPEI_neg
-# Remove variables that are not explanatory so that not included in the plot
-varimp_neg_wo <- subset(varimp_neg, !variable %in% c("gid", "lon", "lat", "gwno"))
-
-area_color <- c("#3C1518", "#B77659", "#3C1518", "#3C1518", "#3C1518", "#3C1518", "#3C1518",
-                "#3C1518", "#3C1518", "#B77659", "#3C1518", "#3C1518", "#3C1518", "#3C1518",
-                "#3C1518", "#3C1518", "#B77659", "#B77659", "#3C1518", "#3C1518", "#3C1518", 
-                "#3C1518", "#3C1518", "#3C1518", "#3C1518", "#3C1518", "#3C1518", "#B77659")
-#Colors: #B77659, #3C1518, #2D2A32, #842F43
-
-(spei_neg <- ggplot(varimp_neg_wo) + 
-    geom_bar(aes(reorder(variable, V1), V1), stat = "identity", fill = area_color) + # Reorder order the chategories depending on the values of a second variable (V1)
-    theme_minimal() +
-    #scale_y_continuous(limits = c(0, 0.2)) +
-    labs(x = "", y = "Variable Importance", title = "SPEI3 negative") +
-    coord_flip())
-
-ggsave("./Figurer/speineg_varimp.png")
-
-# SPEI_pos
-# Remove variables that are not explanatory so that not included in the plot
-varimp_pos_wo <- subset(varimp_pos, !variable %in% c("gid", "lon", "lat", "lag_1_lon", "lag_1_lat", "lag_1_spei3", "lag_1_spei3_pos", "lag_1_spei3_neg"))
-
-(spei_pos <- ggplot(varimp_pos_wo) + 
-  geom_bar(aes(reorder(variable, V1), V1), stat = "identity") + # Reorder order the chategories depending on the values of a second variable (V1)
-  theme_minimal() +
-  #scale_y_continuous(limits = c(0, 0.2)) +
-  labs(x = "", y = "Variable Importance", title = "SPEI3 positive") +
-  coord_flip())
-
-
-ggpubr::ggarrange(spei_neg, spei_pos)
-
-ggsave("./Figurer/variable_importence_lagged.png")
