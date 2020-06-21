@@ -1,4 +1,4 @@
-# Functions frm priogrid that might be useful
+# Functions frm priogrid that are useful for some of the scripts
 
 library(raster)
 library(ncdf4)
