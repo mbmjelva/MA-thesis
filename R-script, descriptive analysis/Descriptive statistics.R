@@ -4,79 +4,62 @@
 library(tidyverse)
 library(stargazer)
 library(ggpubr)
+library(finalfit)
+library(grf)
+library(corrplot)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
 
 final <- read_rds("./Egne datasett/final_dataset.rds")
 
 # Make table of descriptive statistics
-final_df <- data.frame(final) # For å kunne bruke stargazer, kan ikke være tibble.
+final_df <- final %>% select(-starts_with("lag_1"), -gid, -gwno, -lon, -lat, -year, -bdist3, -events, 
+                             -best, -unempl_tot) %>% as.data.frame()# For å kunne bruke stargazer, kan ikke være tibble.
 
-stargazer(final_df,
+stargazer(final_df, #type = "text",
           title = "Descriptive statistics", 
-          covariate.labels = c("Gid", "Year", "gwno", "lon", "lat",
-                               "Events", "Best estimate number of deaths",
-                               "SPEI3", "SPEI3 negative", "SPEI3 positive", "Temperature", "Agricultural area in cell (percentage)",
-                               "Distance to nearest border (km)", "Distance to capital (km)",
-                               "Travel time to nearest\nurban center (min)",
-                               "Population", "Employment in agriculture",
-                               "Total unemployment", "Number of excluded groups",
-                               "SHDI", "Liberal Democracy Index", "Globalization index",
-                               "GDP"),
-          out = "./R-script, descriptive analysis/Figurer/Table_variables")
+          covariate.labels = c("Non-State Conflict", "SPEI3", "SPEI3 positive", "SPEI3 negative", 
+                               "Temperature", "Agricultural area in cell (percentage)",
+                                "Total are covered by irrigation in cell",
+                                "Distance to capital (km)",
+                                "Travel time to nearest\nurban center (min)",
+                                "Population", "Employment in agriculture",
+                                "Number of excluded groups",
+                                "SHDI", "Liberal Democracy Index", "Globalization index",
+                                "GDP"))
 
 
-# Conflict
-ggplot(final) + 
-  geom_bar(aes(conflict), fill = "#808000") + 
-  theme_minimal() +
-  labs(x = "Conflict", y = "")
+# Make correlation plots for operationalization of variables, Chap ------------------------
 
-ggsave("./Figurer/conflict_distribution.png")
+# Check correlation between variables that operationalize the same concept
 
-(a <- ggplot(final) + 
-  geom_bar(aes(events), fill = "#BDB76B") + 
-  theme_minimal() +
-  scale_x_continuous(limits = c(0,361)) +
-  scale_y_continuous(limits = c(0,2000)) +
-  labs(x = "Number of events within a year", y = ""))
+# Dependency on rain-fed agriculture
 
-ggsave("./Figurer/numberofevents.png")
+# In order for the machine to calculate the correlation plots, need a lower number of observations.
+# Since the train_datasets are picked randomly, I just chose one of these. The distribution should be the same as for the bigger dataset.
+train_speipos <- readRDS(file = "./R-script, analysis/Models/train_speipos_lagged_speidich.rds")
 
-(b <- ggplot(final) + 
-  geom_bar(aes(best), fill = "#BDB76B") + 
-  theme_minimal() +
-  scale_x_continuous(limits = c(25,2000), breaks = c(25, 200, 1000, 2000)) +
-  labs(x = "Death toll within a year", y = ""))
+dep_agriculture <- train_speipos[, (names(train_speipos) %in% c("agri_ih", "empl_agr", 
+                                             "irrig_sum"))]
+corrplot(cor(dep_agriculture))
 
-ggsave("./Figurer/deathtoll.png")
+good_governance <- train_speipos[, (names(train_speipos) %in% c("shdi", "gdp", "excluded"))]
+corrplot(cor(good_governance))
 
-ggarrange(a,b)
+urbanization <- train_speipos[, (names(train_speipos) %in% c("ttime_mean", "capdist"))]
+corrplot(cor(urbanization))
 
-ggsave("./Figurer/deathtoll and numberevents.png")
 
-prop.table(table(final$conflict))
-?ggarrange
+## Plot CF tree ##
+final <- final %>%
+  select(-starts_with("lag"), -unempl_tot, -events, -best, -spei3, -spei3_neg, -spei3_pos)
 
-# SPEI3 - variation
-(spei <- ggplot(final) + 
-  geom_histogram(aes(spei3), fill = "#808000", col = "black", binwidth = 0.1) +
-  theme_minimal() +
-    theme(text = element_text(size = 20)) +
-  labs(x = "SPEI3", y =""))
-spei
+# Example of decision tree - Chapter 4 ------------------------------------
 
-ggsave("./figurer/spei_distibution.png")
+tree <- rpart(conflict~., data=final)
 
-(temp <- ggplot(final) + 
-  geom_histogram(aes(temp), fill = "#808000", col = "black", binwidth = 0.5) +
-  theme_minimal() +
-    theme(text = element_text(size = 20)) +
-  labs(x = "Temperature", y = ""))
-
-ggsave("./Figurer/temp_distribution.png")
-
-ggarrange(spei, temp, align = "v")
-
-ggsave("./Figurer/speiogtemp.png")
+rpart.plot(tree)
 
 
 
