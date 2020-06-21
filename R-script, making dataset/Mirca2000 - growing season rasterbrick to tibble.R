@@ -1,11 +1,11 @@
-#### MIRCA2000 fra rasterbrick til tibble #####
+#### MIRCA2000 from rasterbrick to tibble (in order to use it in the weighting of SPEI) #####
 
 library(tidyverse)
 
 mirca_growseas <- read_rds("./Egne datasett/mirca_growseas.rds")
 mirca_startend <- read_rds("./Egne datasett/mirca_startend.rds")
 
-# Growingseason
+# Growing season
 res <- tibble()
 for(i in 1:length(names(mirca_growseas))){
   pop_year <- raster::subset(mirca_growseas, i)

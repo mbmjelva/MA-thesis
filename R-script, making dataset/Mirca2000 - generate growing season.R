@@ -2,7 +2,7 @@
 
 library(tidyverse)
 
-## NB: For å kunne kjøre denne må man kjøre scriptet "priogrid-funksjoner", der er alle priogrid-funksjonene som trengs her (selv om ikke alle der er nødvendige)
+## NB: To be able to run this script, must run the "priogrid-functions" - script first.
 
 # Functions from priogrid -------------------------------------------------
 
@@ -15,13 +15,13 @@ library(tidyverse)
 #' 
 
 
-# Laster inn Cropping periods list data, v. 1.1. Resolution 30 arc-minute
+# Load Cropping periods list data, v. 1.1. Resolution 30 arc-minute
 
 mirca <- read.table(gzfile("./Data/MIRCA/growing_periods_listed/CELL_SPECIFIC_CROPPING_CALENDARS_30MN.TXT.gz"), header = T, sep = "\t")
 
 
-# Gjør til raster og lagrer -----------------------------------------------
-# Må kjøre funksjonene under for å kunne kjøre dette
+# Make raster and save -----------------------------------------------
+# Must run all the functions below to get the raster
 
 mirca_growseas <- gen_growseas(mirca)
 saveRDS(mirca_growseas, "./Egne datasett/mirca_growseas.rds")
