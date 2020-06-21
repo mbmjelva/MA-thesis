@@ -112,24 +112,9 @@ ggplot(final_miss2) + geom_raster(aes(x= lon, y = lat), fill = "darkgrey") +
 
 ggsave("./Figurer/conflict geographic distribution.png")
 
+
 # Other variables with much missing ---------------------------------------
 
-
-# Unemployment
-gg_exc_unempl <- ggplotGrob(ggplot(final, aes(unempl_tot)) + 
-  geom_histogram(fill = viridis(30, direction = -1)) + 
-  theme_bw() + 
-  labs(x = "", y = ""))
-
-
-ggplot(final) + geom_raster(aes(x = lon, y = lat, fill = unempl_tot)) + 
-  coord_fixed(ratio = 1) +
-  theme_bw() +
-  scale_fill_viridis(direction = -1) +
-  labs(fill = "Unemployment") +
-  annotation_custom(gg_exc_unempl, xmin = -200, xmax = -90, ymin = -65, ymax = 0) 
-
-ggsave("./Figurer/geogr_dist_unempl.png")
 
 # Excluded
 gg_exc_bar <- ggplotGrob(ggplot(final) + geom_bar(aes(as.factor(excluded), fill = as.factor(excluded))) + 
