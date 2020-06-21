@@ -1,9 +1,10 @@
 #### Sub-sampling ####
 
+# This script subsamples the larger dataset so that the number of observations is managable
 
 library(tidyverse)
 library(devtools)
-source_gist("https://gist.github.com/mrdwab/6424112") # Må laste ned fra github-siden for å få riktig funksjon
+source_gist("https://gist.github.com/mrdwab/6424112") # Must download from this github page to get the correct code
 
 
 final <- read_rds("./Egne datasett/final_dataset.rds")
@@ -19,7 +20,8 @@ final_lagged <- select(final, gid, lon, lat, year, gwno, continent, conflict, tt
 final_lagged <- final_lagged %>% filter(!is.na(lag_1_spei3))
 
 
-# Ønsker 1,000,000 totalt, så da må 75% av disse være 0 og 25% være 1. 
+# Cannot have more than 1,000,000 observations, conduct stratified sub-sampling so that improve the balance of the conflict-variable
+# 75% of the observations are set to 0 and 25% to 1 
 s_l <- stratified(final_lagged, "conflict", size = c(750000, 250000), replace = T)
 
 table(s_l$conflict)/nrow(s_l)
