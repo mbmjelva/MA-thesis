@@ -59,13 +59,6 @@ cf_neg <- causal_forest(
 # Save the model
 save(cf_neg, file = "./R-script, analysis/Models/cf_neg.rds")
 
-# Variable importance
-varimp_neg <- cf_neg %>% 
-  variable_importance() %>% 
-  as.data.frame() %>% 
-  mutate(variable = colnames(cf_neg$X.orig)) %>% 
-  arrange(desc(V1))
-
 
 # Model with positive SPEI
 cf_pos <- causal_forest(
